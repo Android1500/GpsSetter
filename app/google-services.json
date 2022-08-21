@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "68996867489",
+    "project_id": "gps-setter-18c0e",
+    "storage_bucket": "gps-setter-18c0e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68996867489:android:3ae8ebaf60d15fad74d7e0",
+        "android_client_info": {
+          "package_name": "com.android1500.gpssetter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "68996867489-3lg842kbaj5b73q3uh4mgqrbpj26pjhf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDxM-qQxj2ij6hVCjXvdUFJjELFM0rMwI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "68996867489-3lg842kbaj5b73q3uh4mgqrbpj26pjhf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

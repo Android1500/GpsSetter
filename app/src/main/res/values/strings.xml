@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">GPS Setter</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="xposed_desc">Set location</string>
+    <string name="search">Search</string>
+
+
+    <!-- Errors -->
+    <string name="error_xposed_module_missing">Xposed module is not enabled</string>
+    <string name="error_xposed_module_missing_desc">Enable this module in LSPosed Manager.\n\nDon’t have LSPosed?\n\t1. Install the Riru or Zygisk module from Magisk Manager\n\t2. Install the “Riru or Zygisk - LSPosed” module from Magisk Manager\n\t3. Open this app again</string>
+    <string name="error_missing_root">No root access</string>
+    <string name="error_missing_root_desc">Root access is necessary in order for this app to manage overlays and work properly.</string>
+    <string name="record_saved">save</string>
+    <string name="favorites">Favourites</string>
+    <string name="dialog_favorites_empty">empty</string>
+    <string name="record_not_saved">Not save</string>
+    <string name="empty_add">empty</string>
+    <string name="delete_fav">Delete fav</string>
+    <string name="address">United States</string>
+    <string name="favourite">Favourites</string>
+    <string name="add_favourite">Add favourite</string>
+    <string name="Search">search</string>
+    <string name="rename_favourite">Rename favourite</string>
+    <string name="spoof_location">Spoof location</string>
+    <string name="spoof_location_stop">Spoof location stop</string>
+    <string name="add_fav_in_database">Add fav in database</string>
+    <string name="show_fav_list">Show fav list</string>
+    <string name="favourites">Favourites</string>
+    <string name="about">About</string>
+    <string name="about_tittle">GPS Setter</string>
+    <string name="about_info">A module which will set your location where you want without enable mock location.</string>
+</resources>

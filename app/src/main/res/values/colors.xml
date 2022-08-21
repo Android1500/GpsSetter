@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background">@android:color/white</color>
+    <color name="primary">#2196F3</color>
+    <color name="primary_dark">#1976D2</color>
+    <color name="primary_light">#BBDEFB</color>
+    <color name="accent">#03A9F4</color>
+    <color name="white">#FFFFFFFF</color>
+
+
+    <color name="toolbar_dark">#3C4043</color>
+
+    <color name="toolbar">@android:color/white</color>
+    <color name="search_box_background">#F5F5F5</color>
+    <color name="toolbar_overflow">@android:color/black</color>
+
+</resources>
