@@ -1,5 +1,11 @@
 # GPS Setter
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/Android1500/GpsSetter)
+![GitHub all releases](https://img.shields.io/github/downloads/Android1500/GpsSetter/total)
+[![GitHub stars](https://img.shields.io/github/stars/Android1500/GpsSetter)](https://github.com/Android1500/GpsSetter/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/Android1500/GpsSetter)](https://github.com/Android1500/GpsSetter/issues)
+[![GitHub license](https://img.shields.io/github/license/Android1500/GpsSetter)](https://github.com/Android1500/GpsSetter/blob/master/LICENSE)
+
 ![](https://github.com/Xposed-Modules-Repo/com.android1500.gpssetter/blob/main/banner.png) 
 
 ### Support/Discussion: [XDA thread](https://forum.xda-developers.com/t/app-xposed-8-1-12x-gps-setter-set-device-location.4454879/)
