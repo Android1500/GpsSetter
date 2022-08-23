@@ -23,7 +23,6 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
 
-
     val getLat  = settingsRepo.getLat
     val getLng  = settingsRepo.getLng
     val isStarted = settingsRepo.isStarted

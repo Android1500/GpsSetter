@@ -64,6 +64,13 @@ class SettingsRepository  @Inject constructor(
 
     }
 
+
+    /**
+     *  Make the redirected prefs file world readable ourselves - fixes a bug in Ed/lsposed
+     *
+     *  This requires the XSharedPreferences file path, which we get via a self hook. It does nothing
+     *  when the Xposed module is not enabled.
+     */
     @SuppressLint("SetWorldReadable")
     private fun makeWorldReadable(){
         XposedSelfHooks.getXSharedPrefsPath().let {
