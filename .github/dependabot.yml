@@ -2,13 +2,13 @@
 # package ecosystems to update and where the package manifests are located.
 # Please see the documentation for all configuration options:
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
-
-version: 2
-updates:
-  - package-ecosystem: gradle # See documentation for possible values
-    directory: "/"
-    schedule:
+updates: 
+  - 
+    directory: /
+    package-ecosystem: gradle
+    schedule: 
       interval: daily
-      time: "21:00"
       open-pull-requests-limit: 10
       target-branch: master
+      time: "21:00"
+version: 2
