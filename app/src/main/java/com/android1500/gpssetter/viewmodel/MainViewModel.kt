@@ -11,21 +11,25 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.core.content.FileProvider
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.repository.SettingsRepository
-import com.android1500.gpssetter.selfhook.XposedSelfHooks
-import com.android1500.gpssetter.room.User
 import com.android1500.gpssetter.repository.UserRepo
-import com.android1500.gpssetter.room.ApplicationScope
+import com.android1500.gpssetter.room.User
+import com.android1500.gpssetter.selfhook.XposedSelfHooks
 import com.android1500.gpssetter.update.UpdateChecker
 import com.gun0912.tedpermission.provider.TedPermissionProvider.context
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -192,9 +196,6 @@ class MainViewModel @Inject constructor(
             downloadManager.enqueue(this)
         }
     }
-
-
-
 
 
 

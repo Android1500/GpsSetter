@@ -14,7 +14,7 @@
         android:paddingTop="@dimen/padding_8"
         android:paddingBottom="@dimen/padding_8"
         android:text="@string/download_manager_description"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

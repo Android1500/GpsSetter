@@ -10,7 +10,6 @@
     android:layout_height="wrap_content">
 
 
-
     <TextView
         android:textAppearance="@style/TextAppearance.AppCompat.Widget.TextView.SpinnerItem"
         android:id="@+id/address"

@@ -1,7 +1,6 @@
 package com.android1500.gpssetter
 
 import android.app.Application
-import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 

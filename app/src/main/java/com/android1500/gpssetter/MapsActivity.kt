@@ -1,14 +1,15 @@
 package com.android1500.gpssetter
 
 import android.Manifest
-import android.content.DialogInterface
-import android.graphics.drawable.GradientDrawable
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
-import android.util.Log
-import android.view.*
-import android.widget.*
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -32,14 +33,11 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
-import com.google.android.material.snackbar.Snackbar
 import com.gun0912.tedpermission.coroutine.TedPermission
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 
 @Suppress("NAME_SHADOWING")
@@ -58,16 +56,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private lateinit var alertDialog: AlertDialog.Builder
     private lateinit var dialog: AlertDialog
     private var user: User? = null
-
-    private val updateSnackbar by lazy {
-        Snackbar.make(binding.root, getString(R.string.snackbar_update), Snackbar.LENGTH_INDEFINITE).apply {
-            isAnchorViewLayoutListenerEnabled = true
-            (view.background as? GradientDrawable)?.cornerRadius = resources.getDimension(R.dimen.snackbar_corner_radius)
-            setAction(R.string.snackbar_update_button){
-            }
-
-        }
-    }
 
     private val update by lazy {
         viewModel.getAvailableUpdate()
@@ -92,7 +80,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     private fun checkLocationPermission(){
         lifecycleScope.launch {
-            val permissionResult = TedPermission.create()
+            TedPermission.create()
                 .setDeniedTitle("Permission denied")
                 .setDeniedMessage(
                     "If you reject permission,you can not use this real location\n\nPlease turn on permissions at [Setting] > [Permission]"
@@ -162,7 +150,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mLatLng!!, zoom))
         mMap.setOnMapClickListener(this)
         if (ContextCompat.checkSelfPermission(this, "android.permission.ACCESS_FINE_LOCATION") == 0) {
-            mMap.isMyLocationEnabled = true;
+            mMap.isMyLocationEnabled = true
         }
         mMap.uiSettings.isCompassEnabled = true
 
@@ -231,7 +219,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private fun searchDialog(){
         val view = layoutInflater.inflate(R.layout.search_layout,null)
         val editText = view.findViewById<EditText>(R.id.search_edittxt)
-        MaterialAlertDialogBuilder(this).run {
+        MaterialAlertDialogBuilder(this).apply {
             setTitle("Search")
             setView(view)
             setPositiveButton("Search") { _, _ ->
@@ -261,7 +249,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
    private fun addFavouriteDialog(){
        val view = layoutInflater.inflate(R.layout.search_layout,null)
        val editText = view.findViewById<EditText>(R.id.search_edittxt)
-       MaterialAlertDialogBuilder(this).run {
+       MaterialAlertDialogBuilder(this).apply {
            setTitle("Add favourite")
            setView(view)
            setPositiveButton("Add") { _, _ ->
@@ -370,6 +358,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                 val view = layoutInflater.inflate(R.layout.update_dialog, null)
                 val progress = view.findViewById<LinearProgressIndicator>(R.id.update_download_progress)
                 val cancel = view.findViewById<AppCompatButton>(R.id.update_download_cancel)
+                setView(view)
                 cancel.setOnClickListener {
                     viewModel.cancelDownload(this@MapsActivity)
                     dialog.dismiss()
@@ -399,23 +388,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                             }
                             else -> {}
                         }
-                        update?.let {
+                        update?.let { it ->
                             viewModel.startDownload(this@MapsActivity, it)
                         } ?: run {
-
+                            dialog.dismiss()
                         }
 
                     }
                 }
-                setView(view)
                 dialog = create()
                 dialog.show()
-
-
-
             }
         }
-
         dialog = alertDialog.create()
         dialog.show()
 

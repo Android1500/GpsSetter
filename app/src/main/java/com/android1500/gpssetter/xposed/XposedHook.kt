@@ -11,9 +11,6 @@ import de.robv.android.xposed.*
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import timber.log.Timber
-import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.math.cos
 
 
 class XposedHook : IXposedHookLoadPackage {

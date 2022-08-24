@@ -1,10 +1,9 @@
-package com.android1500.gpssetter.room
-
+package com.android1500.gpssetter.module
 import android.app.Application
 import android.app.DownloadManager
 import android.content.Context
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.room.Room
+import com.android1500.gpssetter.room.AppDatabase
 import com.android1500.gpssetter.update.GitHubService
 
 import dagger.Module
@@ -33,13 +32,15 @@ object AppModule{
 
     @Singleton
     @Provides
-    fun provideDownloadManger(application: Application)= application.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    fun provideDownloadManger(application: Application) =
+        application.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
 
 
 
     @Singleton
     @Provides
-    fun provideGithubService(retrofit: Retrofit):GitHubService = retrofit.create(GitHubService::class.java)
+    fun provideGithubService(retrofit: Retrofit):GitHubService =
+        retrofit.create(GitHubService::class.java)
 
 
 

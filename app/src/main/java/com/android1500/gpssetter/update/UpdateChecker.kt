@@ -2,12 +2,10 @@ package com.android1500.gpssetter.update
 
 import android.content.Context
 import android.os.Parcelable
-import android.util.Log
 import com.android1500.gpssetter.BuildConfig
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import java.io.File
