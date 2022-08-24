@@ -29,4 +29,8 @@
     <string name="about">About</string>
     <string name="about_tittle">GPS Setter</string>
     <string name="about_info">A module which will set your location where you want without enable mock location.</string>
+    <string name="download_manager_description">Downloading update…</string>
+    <string name="snackbar_update_button">Update</string>
+    <string name="snackbar_update">Update available</string>
+    <string name="bs_update_download_failed">Failed</string>
 </resources>

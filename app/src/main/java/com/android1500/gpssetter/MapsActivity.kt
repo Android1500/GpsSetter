@@ -1,14 +1,18 @@
 package com.android1500.gpssetter
 
 import android.Manifest
+import android.content.DialogInterface
+import android.graphics.drawable.GradientDrawable
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatButton
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
@@ -28,10 +32,14 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.google.android.material.snackbar.Snackbar
 import com.gun0912.tedpermission.coroutine.TedPermission
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 
 
 @Suppress("NAME_SHADOWING")
@@ -51,6 +59,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private lateinit var dialog: AlertDialog
     private var user: User? = null
 
+    private val updateSnackbar by lazy {
+        Snackbar.make(binding.root, getString(R.string.snackbar_update), Snackbar.LENGTH_INDEFINITE).apply {
+            isAnchorViewLayoutListenerEnabled = true
+            (view.background as? GradientDrawable)?.cornerRadius = resources.getDimension(R.dimen.snackbar_corner_radius)
+            setAction(R.string.snackbar_update_button){
+            }
+
+        }
+    }
+
+    private val update by lazy {
+        viewModel.getAvailableUpdate()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -59,6 +81,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         checkLocationPermission()
         setFloatActionButton()
         isModuleEnable()
+        updateChecker()
+
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
@@ -336,6 +360,82 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             Toast.makeText(this, applicationContext.getString(R.string.record_saved), Toast.LENGTH_SHORT).show()
         }
     }
+
+    private fun updateDialog(){
+        alertDialog = MaterialAlertDialogBuilder(this@MapsActivity)
+        alertDialog.setTitle(R.string.snackbar_update)
+        alertDialog.setMessage(update?.changelog)
+        alertDialog.setPositiveButton("Update") { _, _ ->
+            MaterialAlertDialogBuilder(this).apply {
+                val view = layoutInflater.inflate(R.layout.update_dialog, null)
+                val progress = view.findViewById<LinearProgressIndicator>(R.id.update_download_progress)
+                val cancel = view.findViewById<AppCompatButton>(R.id.update_download_cancel)
+                cancel.setOnClickListener {
+                    viewModel.cancelDownload(this@MapsActivity)
+                    dialog.dismiss()
+                }
+                lifecycleScope.launch {
+                    viewModel.downloadState.collect {
+                        when (it) {
+                            is MainViewModel.State.Downloading -> {
+                                if (it.progress > 0) {
+                                    progress.isIndeterminate = false
+                                    progress.progress = it.progress
+                                }
+                            }
+                            is MainViewModel.State.Done -> {
+                                viewModel.openPackageInstaller(this@MapsActivity, it.fileUri)
+                                viewModel.clearUpdate()
+                                dialog.dismiss()
+                            }
+
+                            is MainViewModel.State.Failed -> {
+                                Toast.makeText(
+                                    this@MapsActivity,
+                                    R.string.bs_update_download_failed,
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                            }
+                            else -> {}
+                        }
+                        update?.let {
+                            viewModel.startDownload(this@MapsActivity, it)
+                        } ?: run {
+
+                        }
+
+                    }
+                }
+                setView(view)
+                dialog = create()
+                dialog.show()
+
+
+
+            }
+        }
+
+        dialog = alertDialog.create()
+        dialog.show()
+
+    }
+
+    private fun updateChecker(){
+        lifecycleScope.launchWhenResumed {
+            viewModel.update.collect{
+                if (it!= null){
+                    updateDialog()
+                }
+            }
+        }
+    }
+
+
+
+
+
+
 
 }
 

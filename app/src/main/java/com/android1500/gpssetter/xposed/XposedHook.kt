@@ -19,11 +19,8 @@ import kotlin.math.cos
 class XposedHook : IXposedHookLoadPackage {
 
     companion object {
-        const val pi = 3.14159265359
         var newlat: Double = 40.7128
         var newlng: Double = 74.0060
-        private val rand = Random()
-        private const val earth = 6378137.0
         private val settings = Xshare()
         var mLastUpdated: Long = 0
         private const val SHARED_PREFS_FILENAME = "${BuildConfig.APPLICATION_ID}_prefs"
@@ -130,12 +127,8 @@ class XposedHook : IXposedHookLoadPackage {
     private fun updateLocation() {
         try {
             mLastUpdated = System.currentTimeMillis()
-            val x = (rand.nextInt(50) - 25).toDouble()
-            val y = (rand.nextInt(50) - 25).toDouble()
-            val dlat = x / earth
-            val dlng = y / (earth * cos(pi * settings.getLat / 180.0))
-            newlat = settings.getLat + dlat * 180.0 / pi
-            newlng = settings.getLng + dlng * 180.0 / pi
+            newlat = settings.getLat
+            newlng = settings.getLng
         }catch (e: Exception) {
             Timber.tag("GPS Setter").e(e, "Failed to get XposedSettings for %s", context.packageName)
         }
