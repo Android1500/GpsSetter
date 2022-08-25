@@ -10,7 +10,7 @@
     <string name="error_xposed_module_missing_desc">Enable this module in LSPosed Manager.\n\nDon’t have LSPosed?\n\t1. Install the Riru or Zygisk module from Magisk Manager\n\t2. Install the “Riru or Zygisk - LSPosed” module from Magisk Manager\n\t3. Open this app again</string>
     <string name="error_missing_root">No root access</string>
     <string name="error_missing_root_desc">Root access is necessary in order for this app to manage overlays and work properly.</string>
-    <string name="record_saved">save</string>
+    <string name="record_saved">Save</string>
     <string name="favorites">Favourites</string>
     <string name="dialog_favorites_empty">empty</string>
     <string name="record_not_saved">Not save</string>
@@ -33,4 +33,5 @@
     <string name="snackbar_update_button">Update</string>
     <string name="snackbar_update">Update available</string>
     <string name="bs_update_download_failed">Failed</string>
+    <string name="cant_save">Can\'t save</string>
 </resources>

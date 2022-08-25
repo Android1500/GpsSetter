@@ -7,13 +7,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.R
-import com.android1500.gpssetter.room.User
+import com.android1500.gpssetter.room.Favourite
 
 class FavListAdapter(private val listener: ClickListener) : RecyclerView.Adapter<FavListAdapter.ViewHolder>() {
 
 
-    private var mFavorites = arrayListOf<User>()
-    fun addAllFav(favorites: ArrayList<User>){
+    private var mFavorites = arrayListOf<Favourite>()
+    fun addAllFav(favorites: ArrayList<Favourite>){
         mFavorites = favorites
         mFavorites.sortBy {it.address}
 
@@ -23,7 +23,7 @@ class FavListAdapter(private val listener: ClickListener) : RecyclerView.Adapter
         private val address: TextView = view.findViewById(R.id.address)
         private val del: ImageView = itemView.findViewById(R.id.del)
 
-        fun bind(favorite: User){
+        fun bind(favorite: Favourite){
             address.text = favorite.address
             del.setOnClickListener {
                 listener.onItemDelete(favorite)
@@ -51,8 +51,8 @@ class FavListAdapter(private val listener: ClickListener) : RecyclerView.Adapter
 
 
     interface ClickListener {
-        fun onItemClick(item: User?)
-        fun onItemDelete(item: User?)
+        fun onItemClick(item: Favourite?)
+        fun onItemDelete(item: Favourite?)
     }
 
 

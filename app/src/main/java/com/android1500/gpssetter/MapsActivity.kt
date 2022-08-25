@@ -23,7 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapsBinding
-import com.android1500.gpssetter.room.User
+import com.android1500.gpssetter.room.Favourite
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -53,9 +53,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private var lat: Double? = null
     private var lon: Double? = null
     private var xposedDialog: AlertDialog? = null
-    private lateinit var alertDialog: AlertDialog.Builder
+    private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
-    private var user: User? = null
 
     private val update by lazy {
         viewModel.getAvailableUpdate()
@@ -114,14 +113,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
         binding.start.setOnClickListener {
             viewModel.update(true,lat!!, lon!!)
-            mMarker?.position = mLatLng!!
+            mLatLng?.let {
+                mMarker?.position = it
+            }
             mMarker?.isVisible = true
             binding.start.visibility = View.GONE
             binding.stop.visibility =View.VISIBLE
             Toast.makeText(this,"Location spoofing start",Toast.LENGTH_LONG).show()
         }
         binding.stop.setOnClickListener {
-                viewModel.update(false, mLatLng!!.latitude, mLatLng!!.longitude)
+            mLatLng?.let {
+                viewModel.update(false, it.latitude, it.longitude)
+            }
+
                 mMarker?.isVisible = false
                 binding.stop.visibility = View.GONE
                 binding.start.visibility = View.VISIBLE
@@ -137,17 +141,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         lat = viewModel.getLat
         lon  = viewModel.getLng
         mLatLng = LatLng(lat!!, lon!!)
-        mMarker = mMap.addMarker(
-            MarkerOptions().position(mLatLng!!).draggable(false)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)).visible(false)
-        )
+        mLatLng?.let {
+            mMarker = mMap.addMarker(
+                MarkerOptions().position(it).draggable(false)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)).visible(false)
+            )
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
 
+        }
         if (viewModel.isStarted){
-            mMarker?.isVisible = true
-            mMarker?.showInfoWindow()
+            mMarker?.let {
+                it.isVisible = true
+                it.showInfoWindow()
+            }
         }
 
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mLatLng!!, zoom))
         mMap.setOnMapClickListener(this)
         if (ContextCompat.checkSelfPermission(this, "android.permission.ACCESS_FINE_LOCATION") == 0) {
             mMap.isMyLocationEnabled = true
@@ -159,12 +167,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     override fun onMapClick(p0: LatLng) {
             mLatLng = p0
-            mMarker?.position = mLatLng!!
-            mMarker?.isVisible = true
-            mMap.animateCamera(CameraUpdateFactory.newLatLng(mLatLng!!))
-            lat = mLatLng!!.latitude
-            lon = mLatLng!!.longitude
-
+            mMarker?.let { marker ->
+                mLatLng?.let {
+                    marker.position = it
+                    marker.isVisible = true
+                    mMap.animateCamera(CameraUpdateFactory.newLatLng(it))
+                    lat = it.latitude
+                    lon = it.longitude
+                }
+            }
 
     }
 
@@ -189,11 +200,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         if (moveNewLocation) {
             mLatLng = LatLng(lat!!, lon!!)
         }
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mLatLng!!, 12.0f))
-        mMarker?.position = mLatLng as LatLng
-        mMarker?.isVisible = true
-        mMarker?.showInfoWindow()
+        mLatLng?.let { latLng ->
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f))
+            mMarker?.let {
+                it.position = latLng
+                it.isVisible = true
+                it.showInfoWindow()
+            }
 
+        }
     }
 
     override fun onResume() {
@@ -203,7 +218,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     private fun aboutDialog(){
 
-        val dialog = MaterialAlertDialogBuilder(this)
+
+        alertDialog = MaterialAlertDialogBuilder(this)
         val view = layoutInflater.inflate(R.layout.about,null)
         val  tittle = view.findViewById<TextView>(R.id.design_about_title)
         val  version = view.findViewById<TextView>(R.id.design_about_version)
@@ -211,15 +227,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         tittle.text = getString(R.string.app_name)
         version.text = BuildConfig.VERSION_NAME
         info.text = getString(R.string.about_info)
-        dialog.setView(view)
-        dialog.show()
+        alertDialog.setView(view)
+        alertDialog.show()
 
     }
 
     private fun searchDialog(){
-        val view = layoutInflater.inflate(R.layout.search_layout,null)
-        val editText = view.findViewById<EditText>(R.id.search_edittxt)
+
         MaterialAlertDialogBuilder(this).apply {
+            val view = layoutInflater.inflate(R.layout.search_layout,null)
+            val editText = view.findViewById<EditText>(R.id.search_edittxt)
             setTitle("Search")
             setView(view)
             setPositiveButton("Search") { _, _ ->
@@ -230,13 +247,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                         addresses = Geocoder(applicationContext).getFromLocationName(string, 3)
                     } catch (ignored: Exception) {
                     }
-                    if (addresses != null && addresses.isNotEmpty()) {
-                        val address: Address = addresses[0]
+                    addresses?.let { it ->
+                        val address: Address = it[0]
                         mLatLng = LatLng(address.latitude, address.longitude)
-                        lat = mLatLng!!.latitude
-                        lon = mLatLng!!.longitude
-                        moveMapToNewLocation(false)
+                        mLatLng?.let {
+                            lat = it.latitude
+                            lon = it.longitude
+                            moveMapToNewLocation(false)
+                        }
                     }
+
                 }
 
             }
@@ -249,9 +269,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
    private fun addFavouriteDialog(){
        val view = layoutInflater.inflate(R.layout.search_layout,null)
        val editText = view.findViewById<EditText>(R.id.search_edittxt)
-       MaterialAlertDialogBuilder(this).apply {
+       alertDialog =  MaterialAlertDialogBuilder(this).apply {
            setTitle("Add favourite")
-           setView(view)
            setPositiveButton("Add") { _, _ ->
                val s = editText.text.toString()
                if (!mMarker?.isVisible!!){
@@ -260,6 +279,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                    storeFavorite(-1,s, lat!!, lon!!)
                }
            }
+           setView(view)
            show()
        }
 
@@ -288,7 +308,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         lon: Double
     ): Boolean {
         var slot = slot
-        var address: String? = address
+        val address: String = address
       if (slot == -1) {
             var i = 0
             while (true) {
@@ -300,29 +320,31 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                 }
             }
         }
-        if (address == null || address.isEmpty()) {
-            address = getString(R.string.empty_add)
-        }
-        user = User(id = slot.toLong(), address = address, lat = lat, lng = lon)
-        addFavourite(user!!)
+      addFavourite(
+         Favourite(id = slot.toLong(), address = address, lat = lat, lng = lon)
+     )
         return true
     }
 
 
 
-    private fun getFavorite(id: Int): User {
+    private fun getFavorite(id: Int): Favourite {
         return viewModel.getFavouriteSingle(id)
     }
 
-    override fun onItemClick(item: User?) {
-      lat = item!!.lat
-      lon = item.lng
-        if (dialog.isShowing) dialog.dismiss()
-       moveMapToNewLocation(true)
-        Toast.makeText(applicationContext,item.address,Toast.LENGTH_SHORT).show()
+    override fun onItemClick(item: Favourite?) {
+        item?.let {
+            lat = it.lat
+            lon = it.lng
+            Toast.makeText(applicationContext,it.address,Toast.LENGTH_SHORT).show()
+            moveMapToNewLocation(true)
+            if (dialog.isShowing) return dialog.dismiss()
+        }
+
+
     }
 
-    override fun onItemDelete(item: User?) {
+    override fun onItemDelete(item: Favourite?) {
         viewModel.deleteFavourite(item!!)
         Toast.makeText(applicationContext,"Delete",Toast.LENGTH_SHORT).show()
 
@@ -341,11 +363,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         }
 
     }
-    private fun addFavourite(user: User){
-        viewModel.insertUserDetails(user)
+    private fun addFavourite(favourite: Favourite){
+        viewModel.insertNewFavourite(favourite)
         viewModel.response.observe(this){
-            if (it == (-1).toLong()) Toast.makeText(this, "Can't save", Toast.LENGTH_SHORT).show()
-            Toast.makeText(this, applicationContext.getString(R.string.record_saved), Toast.LENGTH_SHORT).show()
+            if (it == (-1).toLong()) Toast.makeText(this, getString(R.string.cant_save), Toast.LENGTH_SHORT).show()
+            else Toast.makeText(this, applicationContext.getString(R.string.record_saved), Toast.LENGTH_SHORT).show()
+
         }
     }
 
@@ -386,7 +409,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                 ).show()
 
                             }
-                            else -> {}
+                            MainViewModel.State.Idle -> TODO()
                         }
                         update?.let { it ->
                             viewModel.startDownload(this@MapsActivity, it)

@@ -39,9 +39,8 @@ object AppModule{
 
     @Singleton
     @Provides
-    fun provideGithubService(retrofit: Retrofit):GitHubService =
+    fun provideGithubService(retrofit: Retrofit): GitHubService =
         retrofit.create(GitHubService::class.java)
-
 
 
     @Provides
@@ -53,6 +52,8 @@ object AppModule{
         .addCallback(callback)
         .build()
 
+
+    @Singleton
     @Provides
     fun providesUserDao(userDatabase: AppDatabase) =
         userDatabase.userDao()

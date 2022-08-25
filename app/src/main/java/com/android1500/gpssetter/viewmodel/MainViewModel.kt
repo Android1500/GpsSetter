@@ -20,7 +20,7 @@ import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.repository.SettingsRepository
 import com.android1500.gpssetter.repository.UserRepo
-import com.android1500.gpssetter.room.User
+import com.android1500.gpssetter.room.Favourite
 import com.android1500.gpssetter.selfhook.XposedSelfHooks
 import com.android1500.gpssetter.update.UpdateChecker
 import com.gun0912.tedpermission.provider.TedPermissionProvider.context
@@ -51,13 +51,13 @@ class MainViewModel @Inject constructor(
     val getLng  = settingsRepo.getLng
     val isStarted = settingsRepo.isStarted
     
-   private val _allFavList = MutableStateFlow<List<User>>(emptyList())
-    val allFavList : StateFlow<List<User>> =  _allFavList
+   private val _allFavList = MutableStateFlow<List<Favourite>>(emptyList())
+    val allFavList : StateFlow<List<Favourite>> =  _allFavList
     fun doGetUserDetails(){
         viewModelScope.launch(Dispatchers.IO) {
-            userRepo.getUserDetails
+            userRepo.getAllFavourites
                 .catch { e ->
-                    Timber.tag("Error").d(e.message.toString())
+                    Timber.tag("Error getting all save favourite").d(e.message.toString())
                 }
                 .collect {
                     _allFavList.value = it
@@ -74,9 +74,9 @@ class MainViewModel @Inject constructor(
     val response: LiveData<Long> = _response
 
 
-    fun insertUserDetails(user: User){
+    fun insertNewFavourite(favourite: Favourite){
         viewModelScope.launch(Dispatchers.IO) {
-            _response.postValue(userRepo.createUserRecords(user))
+            _response.postValue(userRepo.addNewFavourite(favourite))
         }
     }
 
@@ -89,12 +89,12 @@ class MainViewModel @Inject constructor(
     }
 
 
-    fun deleteFavourite(user: User) = viewModelScope.launch {
-        userRepo.deleteUserRecord(user)
+    fun deleteFavourite(favourite: Favourite) = viewModelScope.launch {
+        userRepo.deleteFavourite(favourite)
     }
 
-    fun getFavouriteSingle(i : Int) : User{
-        return userRepo.getSingleUser(i.toLong())
+    fun getFavouriteSingle(i : Int) : Favourite{
+        return userRepo.getSingleFavourite(i.toLong())
     }
 
 
