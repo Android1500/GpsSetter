@@ -18,8 +18,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.R
+import com.android1500.gpssetter.repository.FavouriteRepository
 import com.android1500.gpssetter.repository.SettingsRepository
-import com.android1500.gpssetter.repository.UserRepo
 import com.android1500.gpssetter.room.Favourite
 import com.android1500.gpssetter.selfhook.XposedSelfHooks
 import com.android1500.gpssetter.update.UpdateChecker
@@ -40,7 +40,7 @@ import kotlin.math.roundToInt
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val userRepo: UserRepo,
+    private val favouriteRepository: FavouriteRepository,
     private val settingsRepo: SettingsRepository,
     private val updateChecker: UpdateChecker,
     private val downloadManager: DownloadManager
@@ -55,7 +55,7 @@ class MainViewModel @Inject constructor(
     val allFavList : StateFlow<List<Favourite>> =  _allFavList
     fun doGetUserDetails(){
         viewModelScope.launch(Dispatchers.IO) {
-            userRepo.getAllFavourites
+            favouriteRepository.getAllFavourites
                 .catch { e ->
                     Timber.tag("Error getting all save favourite").d(e.message.toString())
                 }
@@ -76,7 +76,7 @@ class MainViewModel @Inject constructor(
 
     fun insertNewFavourite(favourite: Favourite){
         viewModelScope.launch(Dispatchers.IO) {
-            _response.postValue(userRepo.addNewFavourite(favourite))
+            _response.postValue(favouriteRepository.addNewFavourite(favourite))
         }
     }
 
@@ -90,11 +90,11 @@ class MainViewModel @Inject constructor(
 
 
     fun deleteFavourite(favourite: Favourite) = viewModelScope.launch {
-        userRepo.deleteFavourite(favourite)
+        favouriteRepository.deleteFavourite(favourite)
     }
 
     fun getFavouriteSingle(i : Int) : Favourite{
-        return userRepo.getSingleFavourite(i.toLong())
+        return favouriteRepository.getSingleFavourite(i.toLong())
     }
 
 

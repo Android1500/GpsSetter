@@ -55,8 +55,8 @@ object AppModule{
 
     @Singleton
     @Provides
-    fun providesUserDao(userDatabase: AppDatabase) =
-        userDatabase.userDao()
+    fun providesUserDao(favouriteDatabase: AppDatabase) =
+        favouriteDatabase.favouriteDao()
 
     @ApplicationScope
     @Provides

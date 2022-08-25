@@ -3,7 +3,7 @@ import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface UserDao {
+interface FavouriteDao {
 
         //insert data to room database
         @Insert(onConflict = OnConflictStrategy.IGNORE)

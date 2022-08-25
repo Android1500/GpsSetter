@@ -3,27 +3,27 @@ package com.android1500.gpssetter.repository
 
 import androidx.annotation.WorkerThread
 import com.android1500.gpssetter.room.Favourite
-import com.android1500.gpssetter.room.UserDao
+import com.android1500.gpssetter.room.FavouriteDao
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class UserRepo @Inject constructor(private val userDao: UserDao) {
+class FavouriteRepository @Inject constructor(private val favouriteDao: FavouriteDao) {
 
-    val getAllFavourites: Flow<List<Favourite>> get() =  userDao.getAllFavourites()
+    val getAllFavourites: Flow<List<Favourite>> get() =  favouriteDao.getAllFavourites()
 
         @Suppress("RedundantSuspendModifier")
         @WorkerThread
         suspend fun addNewFavourite(favourite: Favourite) : Long {
-            return userDao.insertToRoomDatabase(favourite)
+            return favouriteDao.insertToRoomDatabase(favourite)
         }
 
         suspend fun deleteFavourite(favourite: Favourite) {
-          userDao.deleteSingleFavourite(favourite)
+          favouriteDao.deleteSingleFavourite(favourite)
        }
 
 
        fun getSingleFavourite(id: Long) : Favourite {
-       return userDao.getSingleFavourite(id)
+       return favouriteDao.getSingleFavourite(id)
 
     }
 
