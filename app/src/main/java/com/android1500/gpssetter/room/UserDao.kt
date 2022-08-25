@@ -13,16 +13,16 @@ interface UserDao {
         @Update
         suspend fun updateUserDetails(favourite: Favourite)
 
-        //delete all user details
+        //delete single favourite
         @Delete
         suspend fun deleteSingleFavourite(favourite: Favourite)
 
-    //get all users inserted to room database...normally this is supposed to be a list of users
+       //get all Favourite inserted to room database...normally this is supposed to be a list of Favourites
         @Transaction
         @Query("SELECT * FROM favourite ORDER BY id DESC")
         fun getAllFavourites() : Flow<List<Favourite>>
 
-    //get single user inserted to room database
+        //get single favourite inserted to room database
         @Transaction
         @Query("SELECT * FROM favourite WHERE id = :id ORDER BY id DESC")
         fun getSingleFavourite(id: Long) : Favourite
