@@ -299,23 +299,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         val  rcv = view.findViewById<RecyclerView>(R.id.favorites_list)
         rcv.layoutManager = LinearLayoutManager(this)
         rcv.adapter = favListAdapter
-        favListAdapter.setOnClickListener(object : FavListAdapter.ClickListener {
-            override fun onItemClick(item: Favourite?) {
-                item?.let {
-                    lat = it.lat
-                    lon = it.lng
-                    Toast.makeText(applicationContext,"Select location ${it.address}",Toast.LENGTH_SHORT).show()
-                    moveMapToNewLocation(true)
-                    if (dialog.isShowing) return dialog.dismiss()
-                }
+        favListAdapter.onItemClick = {
+            it.let {
+                lat = it.lat
+                lon = it.lng
+                Toast.makeText(applicationContext,"Select location ${it.address}",Toast.LENGTH_SHORT).show()
+                moveMapToNewLocation(true)
+                if (dialog.isShowing) dialog.dismiss()
             }
+        }
+        favListAdapter.onItemDelete = {
+            viewModel.deleteFavourite(it)
+            Toast.makeText(applicationContext,"Delete location ${it.address}",Toast.LENGTH_SHORT).show()
+        }
 
-            override fun onItemDelete(item: Favourite?) {
-                viewModel.deleteFavourite(item!!)
-                Toast.makeText(applicationContext,"Delete location ${item.address}",Toast.LENGTH_SHORT).show()
-            }
-
-        })
         alertDialog.setView(view)
         dialog = alertDialog.create()
         dialog.show()

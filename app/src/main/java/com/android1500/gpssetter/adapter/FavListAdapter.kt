@@ -13,11 +13,9 @@ class FavListAdapter(
     ) : RecyclerView.Adapter<FavListAdapter.ViewHolder>() {
 
     private var mFavorites = arrayListOf<Favourite>()
-    private lateinit var mListener :ClickListener
+    var onItemClick : ((Favourite) -> Unit)? = null
+    var onItemDelete : ((Favourite) -> Unit)? = null
 
-    fun setOnClickListener(listener: ClickListener){
-       mListener = listener
-    }
 
 
     fun addAllFav(favorites: ArrayList<Favourite>){
@@ -25,30 +23,26 @@ class FavListAdapter(
         mFavorites.sortBy {it.address}
 
     }
-   inner class ViewHolder(view: View,private val listener: ClickListener): RecyclerView.ViewHolder(view) {
+   inner class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
 
         private val address: TextView = view.findViewById(R.id.address)
         private val delete: ImageView = itemView.findViewById(R.id.del)
 
-
         fun bind(favorite: Favourite){
-
             address.text = favorite.address
             delete.setOnClickListener {
-                listener.onItemDelete(favorite)
+                onItemDelete?.invoke(favorite)
             }
-
             address.setOnClickListener {
-                listener.onItemClick(favorite)
+                onItemClick?.invoke(favorite)
             }
-
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.fav_items, parent, false)
-        return ViewHolder(view,mListener)
+        return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -57,12 +51,5 @@ class FavListAdapter(
     }
 
     override fun getItemCount() = mFavorites.size
-
-
-    interface ClickListener {
-        fun onItemClick(item: Favourite?)
-        fun onItemDelete(item: Favourite?)
-    }
-
 
 }
