@@ -42,10 +42,15 @@ import kotlinx.coroutines.launch
 
 @Suppress("NAME_SHADOWING")
 @AndroidEntryPoint
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener, FavListAdapter.ClickListener{
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener{
 
     private val viewModel by viewModels<MainViewModel>()
-    private val binding by lazy {ActivityMapsBinding.inflate(layoutInflater)}
+    private val binding by lazy {
+        ActivityMapsBinding.inflate(layoutInflater)
+    }
+    private val update by lazy {
+        viewModel.getAvailableUpdate()
+    }
     private lateinit var mMap: GoogleMap
     private lateinit var favListAdapter: FavListAdapter
     private var mMarker: Marker? = null
@@ -56,9 +61,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
 
-    private val update by lazy {
-        viewModel.getAvailableUpdate()
-    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -202,10 +205,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         }
         mLatLng?.let { latLng ->
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f))
-            mMarker?.let {
-                it.position = latLng
-                it.isVisible = true
-                it.showInfoWindow()
+            mMarker?.apply {
+                position = latLng
+                isVisible = true
+                showInfoWindow()
             }
 
         }
@@ -217,18 +220,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     }
 
     private fun aboutDialog(){
-
-
         alertDialog = MaterialAlertDialogBuilder(this)
-        val view = layoutInflater.inflate(R.layout.about,null)
-        val  tittle = view.findViewById<TextView>(R.id.design_about_title)
-        val  version = view.findViewById<TextView>(R.id.design_about_version)
-        val  info = view.findViewById<TextView>(R.id.design_about_info)
-        tittle.text = getString(R.string.app_name)
-        version.text = BuildConfig.VERSION_NAME
-        info.text = getString(R.string.about_info)
-        alertDialog.setView(view)
-        alertDialog.show()
+        val view = layoutInflater.inflate(R.layout.about,null).apply {
+            val  tittle = findViewById<TextView>(R.id.design_about_title)
+            val  version = findViewById<TextView>(R.id.design_about_version)
+            val  info = findViewById<TextView>(R.id.design_about_info)
+            tittle.text = getString(R.string.app_name)
+            version.text = BuildConfig.VERSION_NAME
+            info.text = getString(R.string.about_info)
+        }.run {
+            alertDialog.setView(this)
+            alertDialog.show()
+        }
+
 
     }
 
@@ -249,27 +253,28 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                     }
                     addresses?.let { it ->
                         val address: Address = it[0]
-                        mLatLng = LatLng(address.latitude, address.longitude)
-                        mLatLng?.let {
-                            lat = it.latitude
-                            lon = it.longitude
+                        mLatLng = LatLng(address.latitude, address.longitude).apply {
+                            lat = latitude
+                            lon = longitude
                             moveMapToNewLocation(false)
                         }
+
                     }
 
                 }
-
+            }.run {
+                show()
             }
-            show()
+
         }
 
 
     }
 
    private fun addFavouriteDialog(){
-       val view = layoutInflater.inflate(R.layout.search_layout,null)
-       val editText = view.findViewById<EditText>(R.id.search_edittxt)
        alertDialog =  MaterialAlertDialogBuilder(this).apply {
+           val view = layoutInflater.inflate(R.layout.search_layout,null)
+           val editText = view.findViewById<EditText>(R.id.search_edittxt)
            setTitle("Add favourite")
            setPositiveButton("Add") { _, _ ->
                val s = editText.text.toString()
@@ -286,7 +291,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
    }
 
     private fun openFavouriteListDialog() {
-        favListAdapter = FavListAdapter(this)
+        favListAdapter = FavListAdapter()
         getAllUpdatedFavList()
         alertDialog = MaterialAlertDialogBuilder(this@MapsActivity)
         alertDialog.setTitle("Favourites")
@@ -294,6 +299,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         val  rcv = view.findViewById<RecyclerView>(R.id.favorites_list)
         rcv.layoutManager = LinearLayoutManager(this)
         rcv.adapter = favListAdapter
+        favListAdapter.setOnClickListener(object : FavListAdapter.ClickListener {
+            override fun onItemClick(item: Favourite?) {
+                item?.let {
+                    lat = it.lat
+                    lon = it.lng
+                    Toast.makeText(applicationContext,"Select location ${it.address}",Toast.LENGTH_SHORT).show()
+                    moveMapToNewLocation(true)
+                    if (dialog.isShowing) return dialog.dismiss()
+                }
+            }
+
+            override fun onItemDelete(item: Favourite?) {
+                viewModel.deleteFavourite(item!!)
+                Toast.makeText(applicationContext,"Delete location ${item.address}",Toast.LENGTH_SHORT).show()
+            }
+
+        })
         alertDialog.setView(view)
         dialog = alertDialog.create()
         dialog.show()
@@ -306,7 +328,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         address: String,
         lat: Double,
         lon: Double
-    ): Boolean {
+    ) {
         var slot = slot
         val address: String = address
       if (slot == -1) {
@@ -323,7 +345,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
       addFavourite(
          Favourite(id = slot.toLong(), address = address, lat = lat, lng = lon)
      )
-        return true
+
     }
 
 
@@ -332,24 +354,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         return viewModel.getFavouriteSingle(id)
     }
 
-    override fun onItemClick(item: Favourite?) {
-        item?.let {
-            lat = it.lat
-            lon = it.lng
-            Toast.makeText(applicationContext,it.address,Toast.LENGTH_SHORT).show()
-            moveMapToNewLocation(true)
-            if (dialog.isShowing) return dialog.dismiss()
-        }
 
 
-    }
 
-    override fun onItemDelete(item: Favourite?) {
-        viewModel.deleteFavourite(item!!)
-        Toast.makeText(applicationContext,"Delete",Toast.LENGTH_SHORT).show()
-
-
-    }
 
     private fun getAllUpdatedFavList(){
         this.lifecycleScope.launch {
@@ -409,7 +416,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                 ).show()
 
                             }
-                            MainViewModel.State.Idle -> TODO()
+                            MainViewModel.State.Idle -> null
                         }
                         update?.let { it ->
                             viewModel.startDownload(this@MapsActivity, it)

@@ -60,7 +60,7 @@ class MainViewModel @Inject constructor(
                     Timber.tag("Error getting all save favourite").d(e.message.toString())
                 }
                 .collect {
-                    _allFavList.value = it
+                    _allFavList.emit(it)
                 }
         }
     }
@@ -77,6 +77,7 @@ class MainViewModel @Inject constructor(
     fun insertNewFavourite(favourite: Favourite){
         viewModelScope.launch(Dispatchers.IO) {
             _response.postValue(favouriteRepository.addNewFavourite(favourite))
+
         }
     }
 

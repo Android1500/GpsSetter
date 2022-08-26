@@ -8,7 +8,7 @@ plugins {
     id 'kotlin-parcelize'
 }
 
-def tagName = 'v1.1.3'
+def tagName = 'v1.1.2'
 
 android {
     compileSdk 32

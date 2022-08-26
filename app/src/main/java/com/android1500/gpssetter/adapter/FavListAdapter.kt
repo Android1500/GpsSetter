@@ -9,10 +9,17 @@ import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.room.Favourite
 
-class FavListAdapter(private val listener: ClickListener) : RecyclerView.Adapter<FavListAdapter.ViewHolder>() {
-
+class FavListAdapter(
+    ) : RecyclerView.Adapter<FavListAdapter.ViewHolder>() {
 
     private var mFavorites = arrayListOf<Favourite>()
+    private lateinit var mListener :ClickListener
+
+    fun setOnClickListener(listener: ClickListener){
+       mListener = listener
+    }
+
+
     fun addAllFav(favorites: ArrayList<Favourite>){
         mFavorites = favorites
         mFavorites.sortBy {it.address}
@@ -21,11 +28,13 @@ class FavListAdapter(private val listener: ClickListener) : RecyclerView.Adapter
    inner class ViewHolder(view: View,private val listener: ClickListener): RecyclerView.ViewHolder(view) {
 
         private val address: TextView = view.findViewById(R.id.address)
-        private val del: ImageView = itemView.findViewById(R.id.del)
+        private val delete: ImageView = itemView.findViewById(R.id.del)
+
 
         fun bind(favorite: Favourite){
+
             address.text = favorite.address
-            del.setOnClickListener {
+            delete.setOnClickListener {
                 listener.onItemDelete(favorite)
             }
 
@@ -39,7 +48,7 @@ class FavListAdapter(private val listener: ClickListener) : RecyclerView.Adapter
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.fav_items, parent, false)
-        return ViewHolder(view,listener)
+        return ViewHolder(view,mListener)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
