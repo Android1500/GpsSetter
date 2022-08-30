@@ -1,9 +1,12 @@
 package com.android1500.gpssetter
 
 import android.Manifest
+import android.app.Notification
+import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -14,6 +17,8 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
@@ -22,8 +27,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.adapter.FavListAdapter
+import com.android1500.gpssetter.adapter.MapInfoWindowAdapter
 import com.android1500.gpssetter.databinding.ActivityMapsBinding
 import com.android1500.gpssetter.room.Favourite
+import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -35,15 +42,17 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
-import com.gun0912.tedpermission.coroutine.TedPermission
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.util.*
+import kotlin.properties.Delegates
 
 
 @Suppress("NAME_SHADOWING")
 @AndroidEntryPoint
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener{
-
+    private lateinit var mMap: GoogleMap
     private val viewModel by viewModels<MainViewModel>()
     private val binding by lazy {
         ActivityMapsBinding.inflate(layoutInflater)
@@ -51,15 +60,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private val update by lazy {
         viewModel.getAvailableUpdate()
     }
-    private lateinit var mMap: GoogleMap
+    private val notificationsChannel by lazy {
+        NotificationsChannel()
+    }
+
+
+
     private lateinit var favListAdapter: FavListAdapter
     private var mMarker: Marker? = null
     private var mLatLng: LatLng? = null
-    private var lat: Double? = null
-    private var lon: Double? = null
+    private var lat by Delegates.notNull<Double>()
+    private var lon by Delegates.notNull<Double>()
     private var xposedDialog: AlertDialog? = null
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
+    private var REQUEST_LOCATION_CODE = 101
+
+
+
 
 
 
@@ -68,7 +86,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
-        checkLocationPermission()
         setFloatActionButton()
         isModuleEnable()
         updateChecker()
@@ -80,18 +97,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
 
 
-    private fun checkLocationPermission(){
-        lifecycleScope.launch {
-            TedPermission.create()
-                .setDeniedTitle("Permission denied")
-                .setDeniedMessage(
-                    "If you reject permission,you can not use this real location\n\nPlease turn on permissions at [Setting] > [Permission]"
-                )
-                .setGotoSettingButtonText("Back")
-                .setPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
-                .check()
-        }
-    }
+
     private fun isModuleEnable(){
         viewModel.isXposed.observe(this){ isXposed ->
             xposedDialog?.dismiss()
@@ -115,64 +121,78 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         }
 
         binding.start.setOnClickListener {
-            viewModel.update(true,lat!!, lon!!)
-            mLatLng?.let {
-                mMarker?.position = it
+            viewModel.update(true, lat, lon)
+            mLatLng.let {
+                mMarker?.position = it!!
             }
             mMarker?.isVisible = true
             binding.start.visibility = View.GONE
             binding.stop.visibility =View.VISIBLE
-            Toast.makeText(this,"Location spoofing start",Toast.LENGTH_LONG).show()
+            mLatLng?.getAddress()?.let { address -> showStartNotification(address) }
+            Toast.makeText(
+                this,"Location set",
+                Toast.LENGTH_LONG).show()
         }
         binding.stop.setOnClickListener {
-            mLatLng?.let {
-                viewModel.update(false, it.latitude, it.longitude)
+            mLatLng.let {
+                viewModel.update(false, it!!.latitude, it.longitude)
             }
-
-                mMarker?.isVisible = false
-                binding.stop.visibility = View.GONE
-                binding.start.visibility = View.VISIBLE
-                Toast.makeText(this,"Location spoofing stop",Toast.LENGTH_LONG).show()
+            mMarker?.isVisible = false
+            binding.stop.visibility = View.GONE
+            binding.start.visibility = View.VISIBLE
+            cancelNotification()
+            Toast.makeText(
+                this,"Location unset",
+                Toast.LENGTH_LONG).show()
 
         }
     }
 
+
+
     override fun onMapReady(googleMap: GoogleMap) {
-
         mMap = googleMap
-        val zoom = 12.0f
-        lat = viewModel.getLat
-        lon  = viewModel.getLng
-        mLatLng = LatLng(lat!!, lon!!)
-        mLatLng?.let {
-            mMarker = mMap.addMarker(
-                MarkerOptions().position(it).draggable(false)
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)).visible(false)
-            )
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
+        with(mMap){
+            val zoom = 12.0f
+            lat = viewModel.getLat
+            lon  = viewModel.getLng
+            mLatLng = LatLng(lat, lon)
+            mLatLng.let {
+                mMarker = addMarker(
+                    MarkerOptions().position(it!!).title(mLatLng?.getAddress()).draggable(false)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)).visible(false)
+                )
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
 
-        }
-        if (viewModel.isStarted){
-            mMarker?.let {
-                it.isVisible = true
-                it.showInfoWindow()
             }
-        }
+            setOnMapClickListener(this@MapsActivity)
+            if (ContextCompat.checkSelfPermission(this@MapsActivity, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+                mMap.isMyLocationEnabled = true
+            } else {
+                checkLocationPermission()
+            }
 
-        mMap.setOnMapClickListener(this)
-        if (ContextCompat.checkSelfPermission(this, "android.permission.ACCESS_FINE_LOCATION") == 0) {
-            mMap.isMyLocationEnabled = true
-        }
-        mMap.uiSettings.isCompassEnabled = true
+            val infoAdapter = MapInfoWindowAdapter(LayoutInflater.from(this@MapsActivity))
+            mMap.setInfoWindowAdapter(infoAdapter)
 
+            if (viewModel.isStarted){
+                mMarker?.let {
+                    it.isVisible = true
+                    it.showInfoWindow()
+                }
+            }
+
+           
+        }
 
     }
 
     override fun onMapClick(p0: LatLng) {
             mLatLng = p0
             mMarker?.let { marker ->
-                mLatLng?.let {
-                    marker.position = it
+                mLatLng.let {
+                    marker.position = it!!
                     marker.isVisible = true
                     mMap.animateCamera(CameraUpdateFactory.newLatLng(it))
                     lat = it.latitude
@@ -201,17 +221,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     private fun moveMapToNewLocation(moveNewLocation: Boolean) {
         if (moveNewLocation) {
-            mLatLng = LatLng(lat!!, lon!!)
-        }
-        mLatLng?.let { latLng ->
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 12.0f))
-            mMarker?.apply {
-                position = latLng
-                isVisible = true
-                showInfoWindow()
-            }
+            mLatLng = LatLng(lat, lon)
+            mLatLng.let { latLng ->
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng!!, 12.0f))
+                mMarker?.apply {
+                    title = latLng.getAddress()
+                    position = latLng
+                    isVisible = true
+                    showInfoWindow()
+                }
 
+            }
         }
+
     }
 
     override fun onResume() {
@@ -221,7 +243,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     private fun aboutDialog(){
         alertDialog = MaterialAlertDialogBuilder(this)
-        val view = layoutInflater.inflate(R.layout.about,null).apply {
+        layoutInflater.inflate(R.layout.about,null).apply {
             val  tittle = findViewById<TextView>(R.id.design_about_title)
             val  version = findViewById<TextView>(R.id.design_about_version)
             val  info = findViewById<TextView>(R.id.design_about_info)
@@ -238,54 +260,54 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     private fun searchDialog(){
 
-        MaterialAlertDialogBuilder(this).apply {
+            alertDialog = MaterialAlertDialogBuilder(this)
             val view = layoutInflater.inflate(R.layout.search_layout,null)
             val editText = view.findViewById<EditText>(R.id.search_edittxt)
-            setTitle("Search")
-            setView(view)
-            setPositiveButton("Search") { _, _ ->
-                val string = editText.text.toString()
-                if (string != "") {
+            alertDialog.setTitle("Search")
+            alertDialog.setView(view)
+            alertDialog.setPositiveButton("Search") { _, _ ->
+                    val  v = editText.text.toString()
                     var addresses: List<Address>? = null
                     try {
-                        addresses = Geocoder(applicationContext).getFromLocationName(string, 3)
+                        addresses = Geocoder(this).getFromLocationName(v, 3)
                     } catch (ignored: Exception) {
                     }
-                    addresses?.let { it ->
-                        val address: Address = it[0]
-                        mLatLng = LatLng(address.latitude, address.longitude).apply {
-                            lat = latitude
-                            lon = longitude
-                            moveMapToNewLocation(false)
-                        }
-
+                    if (addresses != null && addresses.isNotEmpty()) {
+                        val address = addresses[0]
+                        lat = address.latitude
+                        lon = address.longitude
+                        moveMapToNewLocation(true)
                     }
-
-                }
-            }.run {
-                show()
             }
+            alertDialog.show()
 
-        }
+
+
+
 
 
     }
 
    private fun addFavouriteDialog(){
-       alertDialog =  MaterialAlertDialogBuilder(this).apply {
-           val view = layoutInflater.inflate(R.layout.search_layout,null)
-           val editText = view.findViewById<EditText>(R.id.search_edittxt)
-           setTitle("Add favourite")
-           setPositiveButton("Add") { _, _ ->
-               val s = editText.text.toString()
-               if (!mMarker?.isVisible!!){
-                   Toast.makeText(this@MapsActivity,"Not location select",Toast.LENGTH_SHORT).show()
-               }else{
-                   storeFavorite(-1,s, lat!!, lon!!)
+           alertDialog =  MaterialAlertDialogBuilder(this).apply {
+               lifecycleScope.launch {
+                   val view = layoutInflater.inflate(R.layout.search_layout,null)
+                   val editText = view.findViewById<EditText>(R.id.search_edittxt)
+                   editText.setText(mLatLng?.getAddress())
+                   setTitle("Add favourite")
+                   setPositiveButton("Add") { _, _ ->
+                       val s = editText.text.toString()
+                       if (!mMarker?.isVisible!!){
+                           Toast.makeText(this@MapsActivity,"Not location select",Toast.LENGTH_SHORT).show()
+                       }else{
+                           storeFavorite(-1,s, lat, lon)
+                       }
+                   }
+                   setView(view)
+                   show()
                }
-           }
-           setView(view)
-           show()
+
+
        }
 
    }
@@ -301,16 +323,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         rcv.adapter = favListAdapter
         favListAdapter.onItemClick = {
             it.let {
-                lat = it.lat
-                lon = it.lng
-                Toast.makeText(applicationContext,"Select location ${it.address}",Toast.LENGTH_SHORT).show()
-                moveMapToNewLocation(true)
-                if (dialog.isShowing) dialog.dismiss()
+                lat = it.lat!!
+                lon = it.lng!!
             }
+            moveMapToNewLocation(true)
+            if (dialog.isShowing) dialog.dismiss()
+
         }
         favListAdapter.onItemDelete = {
             viewModel.deleteFavourite(it)
-            Toast.makeText(applicationContext,"Delete location ${it.address}",Toast.LENGTH_SHORT).show()
         }
 
         alertDialog.setView(view)
@@ -339,20 +360,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                 }
             }
         }
+
       addFavourite(
          Favourite(id = slot.toLong(), address = address, lat = lat, lng = lon)
      )
 
     }
 
-
-
     private fun getFavorite(id: Int): Favourite {
         return viewModel.getFavouriteSingle(id)
     }
-
-
-
 
 
     private fun getAllUpdatedFavList(){
@@ -423,6 +440,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
                     }
                 }
+            }.run {
                 dialog = create()
                 dialog.show()
             }
@@ -441,6 +459,84 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             }
         }
     }
+
+    private fun showStartNotification(address: String){
+        notificationsChannel.showNotification(this){
+            it.setSmallIcon(R.drawable.ic_stop)
+            it.setContentTitle(getString(R.string.location_set))
+            it.setContentText(address)
+            it.setAutoCancel(true)
+            it.setCategory(Notification.CATEGORY_EVENT)
+            it.priority = NotificationCompat.PRIORITY_DEFAULT
+        }
+
+
+
+    }
+    private fun cancelNotification(){
+       notificationsChannel.cancelAllNotifications(this)
+    }
+
+
+
+    private fun checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                AlertDialog.Builder(this)
+                    .setTitle("Location Permission Needed")
+                    .setMessage("This app needs the Location permission, please accept to use location functionality")
+                    .setPositiveButton("OK") { _, _ ->
+                        ActivityCompat.requestPermissions(
+                            this,
+                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_LOCATION_CODE
+                        )
+                    }
+                    .create()
+                    .show()
+
+            } else ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_LOCATION_CODE)
+        }
+    }
+
+
+
+    //Extension for getAddress
+    private fun LatLng.getAddress(): String {
+        var addressString = "No connection"
+
+        try {
+            val addresses =
+                Geocoder(this@MapsActivity, Locale.getDefault()).getFromLocation(latitude, longitude, 1)
+            val sb = StringBuilder()
+            if (addresses.size > 0) {
+                val address = addresses[0].getAddressLine(0)
+                val newAddress = address.split(",".toRegex()).toTypedArray()
+                if (newAddress.size > 1) {
+                    sb.append(newAddress[0])
+                    val index = address.indexOf(",") + 2
+                    if (index > 1 && address.length > index) {
+                        sb.append("\n").append(address.substring(index))
+                    }
+                } else {
+                    sb.append(address)
+                }
+            }
+            addressString = sb.toString()
+            if (addressString.isEmpty()) {
+                addressString = "No address found"
+            }
+        } catch (e: IOException) {
+        }
+        return addressString
+    }
+
+
+
+
+
+
 
 
 

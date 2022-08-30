@@ -75,15 +75,15 @@ dependencies {
     //HiddenApiBypass
     implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:4.3'
 
-    //Permission dialog
-    implementation 'io.github.ParkSangGwon:tedpermission-coroutine:3.3.0'
-
     //Xposed
     compileOnly 'de.robv.android.xposed:api:82'
 
     // Retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+
+
+
 
 
 

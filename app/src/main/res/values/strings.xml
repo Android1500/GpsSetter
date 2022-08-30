@@ -34,4 +34,6 @@
     <string name="snackbar_update">Update available</string>
     <string name="bs_update_download_failed">Failed</string>
     <string name="cant_save">Can\'t save</string>
+    <string name="location_set">Location set</string>
+
 </resources>

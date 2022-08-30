@@ -11,6 +11,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         jcenter()
+
     }
 }
 rootProject.name = "GPS Setter"

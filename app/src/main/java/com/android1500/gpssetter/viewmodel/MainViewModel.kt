@@ -23,8 +23,8 @@ import com.android1500.gpssetter.repository.SettingsRepository
 import com.android1500.gpssetter.room.Favourite
 import com.android1500.gpssetter.selfhook.XposedSelfHooks
 import com.android1500.gpssetter.update.UpdateChecker
-import com.gun0912.tedpermission.provider.TedPermissionProvider.context
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,13 +43,20 @@ class MainViewModel @Inject constructor(
     private val favouriteRepository: FavouriteRepository,
     private val settingsRepo: SettingsRepository,
     private val updateChecker: UpdateChecker,
-    private val downloadManager: DownloadManager
+    private val downloadManager: DownloadManager,
+    @ApplicationContext context: Context
 ) : ViewModel() {
+
+
+
 
 
     val getLat  = settingsRepo.getLat
     val getLng  = settingsRepo.getLng
     val isStarted = settingsRepo.isStarted
+
+
+
     
    private val _allFavList = MutableStateFlow<List<Favourite>>(emptyList())
     val allFavList : StateFlow<List<Favourite>> =  _allFavList
@@ -74,11 +81,9 @@ class MainViewModel @Inject constructor(
     val response: LiveData<Long> = _response
 
 
-    fun insertNewFavourite(favourite: Favourite){
-        viewModelScope.launch(Dispatchers.IO) {
-            _response.postValue(favouriteRepository.addNewFavourite(favourite))
+    fun insertNewFavourite(favourite: Favourite) = viewModelScope.launch(Dispatchers.IO){
+        _response.postValue(favouriteRepository.addNewFavourite(favourite))
 
-        }
     }
 
 
@@ -223,12 +228,24 @@ class MainViewModel @Inject constructor(
     }
 
 
+
+
+
+
+
+
+
+
+
     sealed class State {
         object Idle: State()
         data class Downloading(val progress: Int): State()
         data class Done(val fileUri: Uri): State()
         object Failed: State()
     }
+
+
+
 
 
 }

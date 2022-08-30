@@ -3,7 +3,7 @@ package com.android1500.gpssetter.room
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.android1500.gpssetter.module.ApplicationScope
+import com.android1500.gpssetter.module.util.ApplicationScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject

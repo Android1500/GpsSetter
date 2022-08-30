@@ -1,11 +1,13 @@
 package com.android1500.gpssetter.module
+
 import android.app.Application
 import android.app.DownloadManager
 import android.content.Context
 import androidx.room.Room
+import com.android1500.gpssetter.module.util.ApplicationScope
 import com.android1500.gpssetter.room.AppDatabase
+import com.android1500.gpssetter.room.FavouriteDao
 import com.android1500.gpssetter.update.GitHubService
-
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,13 +16,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import javax.inject.Qualifier
 import javax.inject.Singleton
 
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule{
+
+
 
     @Singleton
     @Provides
@@ -55,7 +58,7 @@ object AppModule{
 
     @Singleton
     @Provides
-    fun providesUserDao(favouriteDatabase: AppDatabase) =
+    fun providesUserDao(favouriteDatabase: AppDatabase) : FavouriteDao =
         favouriteDatabase.favouriteDao()
 
     @ApplicationScope
@@ -65,6 +68,5 @@ object AppModule{
 
 }
 
-@Retention(AnnotationRetention.RUNTIME)
-@Qualifier
-annotation class ApplicationScope
+
+
