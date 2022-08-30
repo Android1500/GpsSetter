@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -27,7 +26,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.adapter.FavListAdapter
-import com.android1500.gpssetter.adapter.MapInfoWindowAdapter
 import com.android1500.gpssetter.databinding.ActivityMapsBinding
 import com.android1500.gpssetter.room.Favourite
 import com.android1500.gpssetter.utils.NotificationsChannel
@@ -44,7 +42,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.io.IOException
 import java.util.*
 import kotlin.properties.Delegates
 
@@ -75,6 +72,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
     private var REQUEST_LOCATION_CODE = 101
+    var mAddress: String = "jj"
 
 
 
@@ -94,6 +92,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         mapFragment.getMapAsync(this)
 
     }
+
 
 
 
@@ -124,6 +123,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             viewModel.update(true, lat, lon)
             mLatLng.let {
                 mMarker?.position = it!!
+
             }
             mMarker?.isVisible = true
             binding.start.visibility = View.GONE
@@ -159,7 +159,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             mLatLng = LatLng(lat, lon)
             mLatLng.let {
                 mMarker = addMarker(
-                    MarkerOptions().position(it!!).title(mLatLng?.getAddress()).draggable(false)
+                    MarkerOptions().position(it!!).draggable(false)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)).visible(false)
                 )
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
@@ -173,8 +173,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                 checkLocationPermission()
             }
 
-            val infoAdapter = MapInfoWindowAdapter(LayoutInflater.from(this@MapsActivity))
-            mMap.setInfoWindowAdapter(infoAdapter)
 
             if (viewModel.isStarted){
                 mMarker?.let {
@@ -225,7 +223,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             mLatLng.let { latLng ->
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng!!, 12.0f))
                 mMarker?.apply {
-                    title = latLng.getAddress()
                     position = latLng
                     isVisible = true
                     showInfoWindow()
@@ -293,7 +290,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                lifecycleScope.launch {
                    val view = layoutInflater.inflate(R.layout.search_layout,null)
                    val editText = view.findViewById<EditText>(R.id.search_edittxt)
-                   editText.setText(mLatLng?.getAddress())
                    setTitle("Add favourite")
                    setPositiveButton("Add") { _, _ ->
                        val s = editText.text.toString()
@@ -467,7 +463,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             it.setContentText(address)
             it.setAutoCancel(true)
             it.setCategory(Notification.CATEGORY_EVENT)
-            it.priority = NotificationCompat.PRIORITY_DEFAULT
+            it.priority = NotificationCompat.PRIORITY_HIGH
         }
 
 
@@ -504,17 +500,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     //Extension for getAddress
     private fun LatLng.getAddress(): String {
-        var addressString = "No connection"
-
-        try {
+        runCatching {
             val addresses =
                 Geocoder(this@MapsActivity, Locale.getDefault()).getFromLocation(latitude, longitude, 1)
             val sb = StringBuilder()
             if (addresses.size > 0) {
                 val address = addresses[0].getAddressLine(0)
-                val newAddress = address.split(",".toRegex()).toTypedArray()
-                if (newAddress.size > 1) {
-                    sb.append(newAddress[0])
+                val strs = address.split(",".toRegex()).toTypedArray()
+                if (strs.size > 1) {
+                    sb.append(strs[0])
                     val index = address.indexOf(",") + 2
                     if (index > 1 && address.length > index) {
                         sb.append("\n").append(address.substring(index))
@@ -523,15 +517,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                     sb.append(address)
                 }
             }
-            addressString = sb.toString()
-            if (addressString.isEmpty()) {
-                addressString = "No address found"
-            }
-        } catch (e: IOException) {
-        }
-        return addressString
-    }
+            sb.toString()
 
+        }.onSuccess {
+            return it
+        }.onFailure {
+            return "No address found"
+        }
+        return "No internet connection"
+    }
 
 
 

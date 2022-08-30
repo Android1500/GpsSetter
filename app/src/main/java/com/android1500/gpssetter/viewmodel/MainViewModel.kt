@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.database.ContentObserver
 import android.database.Cursor
+import android.location.Geocoder
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -34,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
+import java.util.*
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
@@ -55,10 +57,40 @@ class MainViewModel @Inject constructor(
     val getLng  = settingsRepo.getLng
     val isStarted = settingsRepo.isStarted
 
+    private suspend fun getAddress(context: Context,latitude:Double, longitude:Double) = withContext(Dispatchers.Default) {
+        runCatching {
+            val addresses =
+                Geocoder(context, Locale.getDefault()).getFromLocation(latitude, longitude, 1)
+            val sb = StringBuilder()
+            if (addresses.size > 0) {
+                val address = addresses[0].getAddressLine(0)
+                val strs = address.split(",".toRegex()).toTypedArray()
+                if (strs.size > 1) {
+                    sb.append(strs[0])
+                    val index = address.indexOf(",") + 2
+                    if (index > 1 && address.length > index) {
+                        sb.append("\n").append(address.substring(index))
+                    }
+                } else {
+                    sb.append(address)
+                }
+            }
+            sb.toString()
+
+        }.onSuccess {
+            return@withContext  it
+        }.onFailure {
+            return@withContext "No address found"
+        }
+    }
 
 
-    
-   private val _allFavList = MutableStateFlow<List<Favourite>>(emptyList())
+
+
+
+
+
+    private val _allFavList = MutableStateFlow<List<Favourite>>(emptyList())
     val allFavList : StateFlow<List<Favourite>> =  _allFavList
     fun doGetUserDetails(){
         viewModelScope.launch(Dispatchers.IO) {
@@ -227,7 +259,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    
+
 
     sealed class State {
         object Idle: State()
