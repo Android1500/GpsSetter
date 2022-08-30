@@ -26,6 +26,7 @@
 -keepnames class com.android1500.gpssetter.selfhook.XposedSelfHooks{*;}
 -keep class de.robv.android.xposed.**{*;}
 -keepnames class de.robv.android.xposed.**
+
 -repackageclasses
 -allowaccessmodification
 -overloadaggressively
