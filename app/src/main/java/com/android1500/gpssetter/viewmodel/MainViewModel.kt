@@ -227,15 +227,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-
-
-
-
-
-
-
-
-
+    
 
     sealed class State {
         object Idle: State()
