@@ -72,7 +72,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
     private var REQUEST_LOCATION_CODE = 101
-    var mAddress: String = "jj"
+
 
 
 
