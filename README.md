@@ -39,11 +39,7 @@ This Module will Support Android 8.1 +
  
  -> Xposed Framework Installed **(Lsposed or Edxposed)**
  
- ## Support:
- 
-Coding and supporting this project costs me a lot of my precious time. If you find this project useful, you are more than welcome to support its development via giving donation it will boost me .Thanks!
 
-**BTC :-** 12eai5UkUtBe1gzNYvBvjTNTDvqVBFbQzy
 
 ## Component Use :-
 
