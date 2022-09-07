@@ -28,7 +28,7 @@ This Module will Support Android 8.1 +
 
 -> Spoof gps location. 
 
--> Beautiful Material Design UI
+-> Material Design UI
 
 -> Add Favorite Place
 
@@ -40,7 +40,6 @@ This Module will Support Android 8.1 +
  -> Xposed Framework Installed **(Lsposed or Edxposed)**
  
 
-
 ## Component Use :-
 
 -> Hilt
@@ -50,3 +49,6 @@ This Module will Support Android 8.1 +
 -> ViewModel
 
 -> MVVM Architecture
+
+-> Retrofit
+
