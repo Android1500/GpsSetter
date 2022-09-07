@@ -41,7 +41,9 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 import kotlin.properties.Delegates
 
@@ -263,18 +265,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             alertDialog.setTitle("Search")
             alertDialog.setView(view)
             alertDialog.setPositiveButton("Search") { _, _ ->
-                    val  v = editText.text.toString()
-                    var addresses: List<Address>? = null
-                    try {
-                        addresses = Geocoder(this).getFromLocationName(v, 3)
-                    } catch (ignored: Exception) {
+                    lifecycleScope.launch(Dispatchers.IO) {
+                            val  getInput = editText.text.toString()
+                            var addresses: List<Address>? = null
+                            try {
+                                addresses = Geocoder(this@MapsActivity).getFromLocationName(getInput, 3)
+                            } catch (ignored: Exception) {
+                            }
+                            withContext(Dispatchers.Main){
+                                if (addresses != null && addresses.isNotEmpty()) {
+                                    val address = addresses[0]
+                                    lat = address.latitude
+                                    lon = address.longitude
+                                    moveMapToNewLocation(true)
+                                }
+                            }
+
+
                     }
-                    if (addresses != null && addresses.isNotEmpty()) {
-                        val address = addresses[0]
-                        lat = address.latitude
-                        lon = address.longitude
-                        moveMapToNewLocation(true)
-                    }
+
+
             }
             alertDialog.show()
 
