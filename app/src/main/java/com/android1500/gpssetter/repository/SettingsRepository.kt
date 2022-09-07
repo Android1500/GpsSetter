@@ -42,6 +42,7 @@ class SettingsRepository  @Inject constructor(
          }
 
     }
+
     val isStarted : Boolean
     get() = sharedPreferences.getBoolean("start", start)
 

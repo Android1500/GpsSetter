@@ -11,6 +11,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -77,7 +78,7 @@ class MainViewModel @Inject constructor(
     val response: LiveData<Long> = _response
 
 
-    fun insertNewFavourite(favourite: Favourite) = viewModelScope.launch(Dispatchers.IO){
+    private fun insertNewFavourite(favourite: Favourite) = viewModelScope.launch(Dispatchers.IO){
         _response.postValue(favouriteRepository.addNewFavourite(favourite))
 
     }
@@ -95,7 +96,7 @@ class MainViewModel @Inject constructor(
         favouriteRepository.deleteFavourite(favourite)
     }
 
-    fun getFavouriteSingle(i : Int) : Favourite{
+    private fun getFavouriteSingle(i : Int) : Favourite{
         return favouriteRepository.getSingleFavourite(i.toLong())
     }
 
@@ -234,6 +235,24 @@ class MainViewModel @Inject constructor(
 
 
 
+     fun storeFavorite(
+        address: String,
+        lat: Double,
+        lon: Double
+    ) = viewModelScope.launch(Dispatchers.IO) {
+        val slot: Int
+         val address: String = address
+            var i = 0
+            while (true) {
+                if(getFavouriteSingle(i) == null) {
+                    slot = i
+                    break
+                } else {
+                    i++
+                }
+        }
+         insertNewFavourite(Favourite(id = slot.toLong(), address = address, lat = lat, lng = lon))
+    }
 
 
 }

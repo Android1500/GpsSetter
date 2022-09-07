@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -27,7 +28,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapsBinding
-import com.android1500.gpssetter.room.Favourite
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -42,6 +42,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -62,6 +64,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private val notificationsChannel by lazy {
         NotificationsChannel()
     }
+
 
 
 
@@ -86,16 +89,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+        initializeMap()
         setFloatActionButton()
         isModuleEnable()
         updateChecker()
 
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+
 
     }
-
-
+    private fun initializeMap(){
+        lifecycleScope.launchWhenResumed {
+            val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+            mapFragment.getMapAsync(this@MapsActivity)
+        }
+    }
 
 
 
@@ -130,10 +137,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             mMarker?.isVisible = true
             binding.start.visibility = View.GONE
             binding.stop.visibility =View.VISIBLE
-            mLatLng?.getAddress()?.let { address -> showStartNotification(address) }
-            Toast.makeText(
-                this,"Location set",
-                Toast.LENGTH_LONG).show()
+            lifecycleScope.launch { mLatLng?.getAddress()?.let { address -> showStartNotification(address) }  }
+            showToast("Location set")
         }
         binding.stop.setOnClickListener {
             mLatLng.let {
@@ -143,9 +148,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             binding.stop.visibility = View.GONE
             binding.start.visibility = View.VISIBLE
             cancelNotification()
-            Toast.makeText(
-                this,"Location unset",
-                Toast.LENGTH_LONG).show()
+            showToast("Location unset")
 
         }
     }
@@ -175,15 +178,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                 checkLocationPermission()
             }
 
-
             if (viewModel.isStarted){
                 mMarker?.let {
                     it.isVisible = true
                     it.showInfoWindow()
                 }
             }
-
-           
         }
 
     }
@@ -281,39 +281,32 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                 }
                             }
 
-
                     }
-
 
             }
             alertDialog.show()
 
-
-
-
-
-
     }
 
    private fun addFavouriteDialog(){
+
            alertDialog =  MaterialAlertDialogBuilder(this).apply {
-               lifecycleScope.launch {
                    val view = layoutInflater.inflate(R.layout.search_layout,null)
                    val editText = view.findViewById<EditText>(R.id.search_edittxt)
                    setTitle("Add favourite")
                    setPositiveButton("Add") { _, _ ->
                        val s = editText.text.toString()
                        if (!mMarker?.isVisible!!){
-                           Toast.makeText(this@MapsActivity,"Not location select",Toast.LENGTH_SHORT).show()
+                           showToast("Not location select")
                        }else{
-                           storeFavorite(-1,s, lat, lon)
+                           viewModel.storeFavorite(s, lat, lon)
+                           viewModel.response.observe(this@MapsActivity){
+                               if (it == (-1).toLong()) showToast("Can't save") else showToast("Save")
+                           }
                        }
-                   }
-                   setView(view)
-                   show()
                }
-
-
+               setView(view)
+               show()
        }
 
    }
@@ -339,7 +332,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         favListAdapter.onItemDelete = {
             viewModel.deleteFavourite(it)
         }
-
         alertDialog.setView(view)
         dialog = alertDialog.create()
         dialog.show()
@@ -347,35 +339,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         }
 
 
- private fun storeFavorite(
-        slot: Int,
-        address: String,
-        lat: Double,
-        lon: Double
-    ) {
-        var slot = slot
-        val address: String = address
-      if (slot == -1) {
-            var i = 0
-            while (true) {
-              if(getFavorite(i) == null) {
-                    slot = i
-                    break
-                } else {
-                    i++
-                }
-            }
-        }
-
-      addFavourite(
-         Favourite(id = slot.toLong(), address = address, lat = lat, lng = lon)
-     )
-
-    }
-
-    private fun getFavorite(id: Int): Favourite {
-        return viewModel.getFavouriteSingle(id)
-    }
 
 
     private fun getAllUpdatedFavList(){
@@ -390,14 +353,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         }
 
     }
-    private fun addFavourite(favourite: Favourite){
-        viewModel.insertNewFavourite(favourite)
-        viewModel.response.observe(this){
-            if (it == (-1).toLong()) Toast.makeText(this, getString(R.string.cant_save), Toast.LENGTH_SHORT).show()
-            else Toast.makeText(this, applicationContext.getString(R.string.record_saved), Toast.LENGTH_SHORT).show()
 
-        }
-    }
 
     private fun updateDialog(){
         alertDialog = MaterialAlertDialogBuilder(this@MapsActivity)
@@ -434,6 +390,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                     R.string.bs_update_download_failed,
                                     Toast.LENGTH_LONG
                                 ).show()
+                                dialog.dismiss()
 
                             }
                             MainViewModel.State.Idle -> null
@@ -509,25 +466,28 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
 
     //Extension for getAddress
-    private fun LatLng.getAddress(): String {
+    private suspend fun LatLng.getAddress(): String {
         runCatching {
-            val addresses =
-                Geocoder(this@MapsActivity, Locale.getDefault()).getFromLocation(latitude, longitude, 1)
-            val sb = StringBuilder()
-            if (addresses.size > 0) {
-                val address = addresses[0].getAddressLine(0)
-                val strs = address.split(",".toRegex()).toTypedArray()
-                if (strs.size > 1) {
-                    sb.append(strs[0])
-                    val index = address.indexOf(",") + 2
-                    if (index > 1 && address.length > index) {
-                        sb.append("\n").append(address.substring(index))
+            val address = lifecycleScope.async(Dispatchers.IO){
+                val addresses =
+                    Geocoder(this@MapsActivity, Locale.getDefault()).getFromLocation(latitude, longitude, 1)
+                val sb = StringBuilder()
+                if (addresses.size > 0) {
+                    val address = addresses[0].getAddressLine(0)
+                    val strs = address.split(",".toRegex()).toTypedArray()
+                    if (strs.size > 1) {
+                        sb.append(strs[0])
+                        val index = address.indexOf(",") + 2
+                        if (index > 1 && address.length > index) {
+                            sb.append("\n").append(address.substring(index))
+                        }
+                    } else {
+                        sb.append(address)
                     }
-                } else {
-                    sb.append(address)
                 }
+                sb.toString()
             }
-            sb.toString()
+            address.await()
 
         }.onSuccess {
             return it
@@ -539,6 +499,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
 
 
+ private fun showToast(string: String){
+     Toast.makeText(this,string,Toast.LENGTH_LONG).show()
+
+ }
 
 
 
