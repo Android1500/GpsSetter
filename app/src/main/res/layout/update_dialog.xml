@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:layout_gravity="bottom">
+    tools:layout_gravity="bottom"
+    tools:viewBindingIgnore="true">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/fragment_update_download_title"

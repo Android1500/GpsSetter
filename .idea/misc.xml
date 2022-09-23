@@ -30,9 +30,12 @@
         <entry key="..\:/Users/Developer/AndroidStudioProjects/GPSSetter/app/src/main/res/layout/update_dialog.xml" value="0.22" />
         <entry key="..\:/Users/Developer/AndroidStudioProjects/GPSSetter/app/src/main/res/menu/main_menu.xml" value="0.1" />
         <entry key="..\:/Users/Developer/AndroidStudioProjects/GPSSetter/app/src/main/res/xml/provider_paths.xml" value="0.1" />
+        <entry key="..\:/Users/Developer/AndroidStudioProjects/GpsSetter/app/src/main/res/layout/edit.xml" value="0.19895833333333332" />
+        <entry key="..\:/Users/Developer/AndroidStudioProjects/GpsSetter/app/src/main/res/layout/search_layout.xml" value="0.2" />
       </map>
     </option>
   </component>
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>

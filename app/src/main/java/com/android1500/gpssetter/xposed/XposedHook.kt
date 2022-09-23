@@ -1,7 +1,10 @@
 package com.android1500.gpssetter.xposed
 
 import android.app.AndroidAppHelper
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
@@ -28,12 +31,17 @@ class XposedHook : IXposedHookLoadPackage {
     private val context by lazy { AndroidAppHelper.currentApplication() as Context }
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam?) {
 
-        if(lpparam?.packageName == BuildConfig.APPLICATION_ID){ setupSelfHooks(lpparam.classLoader) }
+        if(lpparam?.packageName == BuildConfig.APPLICATION_ID){
+             setupSelfHooks(lpparam.classLoader)
+        }
+
 
         XposedHelpers.findAndHookMethod(Location::class.java,"getLatitude", object : XC_MethodHook(){
             override fun beforeHookedMethod(param: MethodHookParam?) {
                 super.beforeHookedMethod(param)
-                if (System.currentTimeMillis() - mLastUpdated > 200){ updateLocation() }
+                if (System.currentTimeMillis() - mLastUpdated > 200){
+                    updateLocation()
+                }
                 if (settings.isStarted){
                     param?.result = newlat
 

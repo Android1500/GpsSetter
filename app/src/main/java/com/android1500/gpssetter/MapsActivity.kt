@@ -1,10 +1,13 @@
 package com.android1500.gpssetter
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Notification
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -13,6 +16,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
@@ -20,7 +24,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
-import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -28,6 +31,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapsBinding
+import com.android1500.gpssetter.ext.getAddress
+import com.android1500.gpssetter.ext.isNetworkConnected
+import com.android1500.gpssetter.ext.showToast
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -43,16 +49,15 @@ import com.google.android.material.progressindicator.LinearProgressIndicator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 import kotlin.properties.Delegates
 
 
-@Suppress("NAME_SHADOWING")
 @AndroidEntryPoint
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener{
+
     private lateinit var mMap: GoogleMap
     private val viewModel by viewModels<MainViewModel>()
     private val binding by lazy {
@@ -77,10 +82,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
     private var REQUEST_LOCATION_CODE = 101
-
-
-
-
 
 
 
@@ -132,12 +133,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             viewModel.update(true, lat, lon)
             mLatLng.let {
                 mMarker?.position = it!!
-
             }
             mMarker?.isVisible = true
             binding.start.visibility = View.GONE
             binding.stop.visibility =View.VISIBLE
-            lifecycleScope.launch { mLatLng?.getAddress()?.let { address -> showStartNotification(address) }  }
+            lifecycleScope.launch { mLatLng?.getAddress(this@MapsActivity)?.let { address -> showStartNotification(address) }  }
             showToast("Location set")
         }
         binding.stop.setOnClickListener {
@@ -152,6 +152,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
         }
     }
+
 
 
 
@@ -257,31 +258,36 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     }
 
-    private fun searchDialog(){
 
+    private fun searchDialog(){
             alertDialog = MaterialAlertDialogBuilder(this)
             val view = layoutInflater.inflate(R.layout.search_layout,null)
             val editText = view.findViewById<EditText>(R.id.search_edittxt)
             alertDialog.setTitle("Search")
             alertDialog.setView(view)
             alertDialog.setPositiveButton("Search") { _, _ ->
+                if (isNetworkConnected()){
                     lifecycleScope.launch(Dispatchers.IO) {
-                            val  getInput = editText.text.toString()
-                            var addresses: List<Address>? = null
-                            try {
-                                addresses = Geocoder(this@MapsActivity).getFromLocationName(getInput, 3)
-                            } catch (ignored: Exception) {
+                        val  getInput = editText.text.toString()
+                        var addresses: List<Address>? = null
+                        try {
+                            addresses = Geocoder(this@MapsActivity).getFromLocationName(getInput, 3)
+                        } catch (ignored: Exception) {
+                        }
+                        withContext(Dispatchers.Main){
+                            if (addresses != null && addresses.isNotEmpty()) {
+                                val address = addresses[0]
+                                lat = address.latitude
+                                lon = address.longitude
+                                moveMapToNewLocation(true)
                             }
-                            withContext(Dispatchers.Main){
-                                if (addresses != null && addresses.isNotEmpty()) {
-                                    val address = addresses[0]
-                                    lat = address.latitude
-                                    lon = address.longitude
-                                    moveMapToNewLocation(true)
-                                }
-                            }
+                        }
 
                     }
+
+                }else {
+                    showToast("No internet connection")
+                }
 
             }
             alertDialog.show()
@@ -393,15 +399,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                 dialog.dismiss()
 
                             }
-                            MainViewModel.State.Idle -> null
+                            else -> {}
                         }
-                        update?.let { it ->
-                            viewModel.startDownload(this@MapsActivity, it)
-                        } ?: run {
-                            dialog.dismiss()
-                        }
-
                     }
+                }
+                update?.let { it ->
+                    viewModel.startDownload(this@MapsActivity, it)
+                } ?: run {
+                    dialog.dismiss()
                 }
             }.run {
                 dialog = create()
@@ -433,8 +438,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             it.priority = NotificationCompat.PRIORITY_HIGH
         }
 
-
-
     }
     private fun cancelNotification(){
        notificationsChannel.cancelAllNotifications(this)
@@ -462,50 +465,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             } else ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_LOCATION_CODE)
         }
     }
-
-
-
-    //Extension for getAddress
-    private suspend fun LatLng.getAddress(): String {
-        runCatching {
-            val address = lifecycleScope.async(Dispatchers.IO){
-                val addresses =
-                    Geocoder(this@MapsActivity, Locale.getDefault()).getFromLocation(latitude, longitude, 1)
-                val sb = StringBuilder()
-                if (addresses.size > 0) {
-                    val address = addresses[0].getAddressLine(0)
-                    val strs = address.split(",".toRegex()).toTypedArray()
-                    if (strs.size > 1) {
-                        sb.append(strs[0])
-                        val index = address.indexOf(",") + 2
-                        if (index > 1 && address.length > index) {
-                            sb.append("\n").append(address.substring(index))
-                        }
-                    } else {
-                        sb.append(address)
-                    }
-                }
-                sb.toString()
-            }
-            address.await()
-
-        }.onSuccess {
-            return it
-        }.onFailure {
-            return "No address found"
-        }
-        return "No internet connection"
-    }
-
-
-
- private fun showToast(string: String){
-     Toast.makeText(this,string,Toast.LENGTH_LONG).show()
-
- }
-
-
-
 
 
 

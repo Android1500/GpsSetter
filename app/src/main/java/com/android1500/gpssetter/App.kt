@@ -8,10 +8,10 @@ import timber.log.Timber
 @HiltAndroidApp
 class App : Application() {
 
-
     override fun onCreate() {
         super.onCreate()
         commonInit()
+
     }
 
     companion object {

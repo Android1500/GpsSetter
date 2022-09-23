@@ -22,6 +22,7 @@ class FavListAdapter(
         mFavorites = favorites
         mFavorites.sortBy {it.address}
 
+
     }
    inner class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
 

@@ -19,6 +19,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.R
+import com.android1500.gpssetter.ext.onDefault
+import com.android1500.gpssetter.ext.onIO
+import com.android1500.gpssetter.ext.onMain
 import com.android1500.gpssetter.repository.FavouriteRepository
 import com.android1500.gpssetter.repository.SettingsRepository
 import com.android1500.gpssetter.room.Favourite
@@ -49,7 +52,6 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
 
-
     val getLat  = settingsRepo.getLat
     val getLng  = settingsRepo.getLng
     val isStarted = settingsRepo.isStarted
@@ -58,7 +60,7 @@ class MainViewModel @Inject constructor(
     private val _allFavList = MutableStateFlow<List<Favourite>>(emptyList())
     val allFavList : StateFlow<List<Favourite>> =  _allFavList
     fun doGetUserDetails(){
-        viewModelScope.launch(Dispatchers.IO) {
+        onIO {
             favouriteRepository.getAllFavourites
                 .catch { e ->
                     Timber.tag("Error getting all save favourite").d(e.message.toString())
@@ -70,7 +72,7 @@ class MainViewModel @Inject constructor(
     }
 
 
-    fun update(start: Boolean, la: Double, ln: Double) = viewModelScope.launch {
+    fun update(start: Boolean, la: Double, ln: Double) = onIO {
         settingsRepo.update(start,la,ln)
     }
 
@@ -78,7 +80,7 @@ class MainViewModel @Inject constructor(
     val response: LiveData<Long> = _response
 
 
-    private fun insertNewFavourite(favourite: Favourite) = viewModelScope.launch(Dispatchers.IO){
+    private fun insertNewFavourite(favourite: Favourite) = onIO {
         _response.postValue(favouriteRepository.addNewFavourite(favourite))
 
     }
@@ -92,17 +94,17 @@ class MainViewModel @Inject constructor(
     }
 
 
-    fun deleteFavourite(favourite: Favourite) = viewModelScope.launch {
+    fun deleteFavourite(favourite: Favourite) = onIO {
         favouriteRepository.deleteFavourite(favourite)
     }
 
-    private fun getFavouriteSingle(i : Int) : Favourite{
+    private fun getFavouriteSingle(i : Int) : Favourite {
         return favouriteRepository.getSingleFavourite(i.toLong())
     }
 
 
     private val _update = MutableStateFlow<UpdateChecker.Update?>(null).apply {
-        viewModelScope.launch {
+        onDefault {
             withContext(Dispatchers.IO){
                 updateChecker.clearCachedDownloads(context)
             }
@@ -118,7 +120,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun clearUpdate() {
-        viewModelScope.launch {
+        onMain {
             _update.emit(null)
         }
     }
@@ -140,7 +142,7 @@ class MainViewModel @Inject constructor(
 
     private val downloadStateReceiver = object: BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
-            viewModelScope.launch {
+            onMain {
                 var success = false
                 val query = DownloadManager.Query().apply {
                     setFilterById(requestId ?: return@apply)
@@ -165,9 +167,9 @@ class MainViewModel @Inject constructor(
     private val downloadObserver = object: ContentObserver(Handler(Looper.getMainLooper())) {
         override fun onChange(selfChange: Boolean, uri: Uri?) {
             super.onChange(selfChange, uri)
-            viewModelScope.launch {
+            onMain {
                 val query = DownloadManager.Query()
-                query.setFilterById(requestId ?: return@launch)
+                query.setFilterById(requestId ?: return@onMain)
                 val c: Cursor = downloadManager.query(query)
                 var progress = 0.0
                 if (c.moveToFirst()) {
@@ -184,7 +186,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun downloadUpdate(context: Context, url: String, fileName: String) = viewModelScope.launch {
+    private fun downloadUpdate(context: Context, url: String, fileName: String) = onMain {
         val downloadFolder = File(context.externalCacheDir, "updates").apply {
             mkdirs()
         }
@@ -214,7 +216,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun cancelDownload(context: Context) {
-        viewModelScope.launch {
+        onDefault {
             requestId?.let {
                 downloadManager.remove(it)
             }
@@ -239,7 +241,7 @@ class MainViewModel @Inject constructor(
         address: String,
         lat: Double,
         lon: Double
-    ) = viewModelScope.launch(Dispatchers.IO) {
+    ) = onIO {
         val slot: Int
          val address: String = address
             var i = 0
