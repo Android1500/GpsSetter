@@ -1,4 +1,4 @@
-package com.android1500.gpssetter.ext
+package com.android1500.gpssetter.utils.ext
 
 import android.content.Context
 import android.location.Geocoder
@@ -21,8 +21,6 @@ fun ViewModel.onDefault(body: suspend () -> Unit): Job {
         body()
     }
 }
-
-
 
 fun ViewModel.onMain(body: suspend () -> Unit): Job {
     return viewModelScope.launch(Dispatchers.Main) {

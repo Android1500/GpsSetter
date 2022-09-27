@@ -19,9 +19,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.R
-import com.android1500.gpssetter.ext.onDefault
-import com.android1500.gpssetter.ext.onIO
-import com.android1500.gpssetter.ext.onMain
+import com.android1500.gpssetter.utils.ext.onDefault
+import com.android1500.gpssetter.utils.ext.onIO
+import com.android1500.gpssetter.utils.ext.onMain
 import com.android1500.gpssetter.repository.FavouriteRepository
 import com.android1500.gpssetter.repository.SettingsRepository
 import com.android1500.gpssetter.room.Favourite
@@ -88,7 +88,7 @@ class MainViewModel @Inject constructor(
 
     val isXposed = MutableLiveData<Boolean>()
     fun updateXposedState() {
-        viewModelScope.launch {
+        onMain {
             isXposed.value = XposedSelfHooks.isXposedModuleEnabled()
         }
     }

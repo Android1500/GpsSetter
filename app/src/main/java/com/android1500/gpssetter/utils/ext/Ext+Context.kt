@@ -1,4 +1,4 @@
-package com.android1500.gpssetter.ext
+package com.android1500.gpssetter.utils.ext
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -19,7 +19,6 @@ fun Context.isNetworkConnected(): Boolean {
         NetworkCapabilities.TRANSPORT_CELLULAR,
         NetworkCapabilities.TRANSPORT_ETHERNET,
         NetworkCapabilities.TRANSPORT_LOWPAN,
-        NetworkCapabilities.TRANSPORT_USB,
         NetworkCapabilities.TRANSPORT_VPN,
         NetworkCapabilities.TRANSPORT_WIFI,
         NetworkCapabilities.TRANSPORT_WIFI_AWARE

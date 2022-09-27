@@ -37,4 +37,13 @@
     <string name="location_set">Location set</string>
     <string name="title">Location set notification</string>
     <string name="des">Show notification when location will set</string>
+    <string name="location_permission_title">Location Permission Needed</string>
+    <string name="location_permission_msg">This app needs the Location permission, please accept to use location functionality</string>
+    <string name="dialog_button_ok">OK</string>
+    <string name="update">Update</string>
+    <string name="title_fav">Favourites</string>
+    <string name="add_fav_dialog_title">Add favourite</string>
+    <string name="dialog_button_add">Add</string>
+    <string name="no_internet_connection">No internet connection</string>
+    <string name="location_unset">Location unset</string>
 </resources>

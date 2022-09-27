@@ -31,9 +31,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapsBinding
-import com.android1500.gpssetter.ext.getAddress
-import com.android1500.gpssetter.ext.isNetworkConnected
-import com.android1500.gpssetter.ext.showToast
+import com.android1500.gpssetter.utils.ext.getAddress
+import com.android1500.gpssetter.utils.ext.isNetworkConnected
+import com.android1500.gpssetter.utils.ext.showToast
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -94,10 +94,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         setFloatActionButton()
         isModuleEnable()
         updateChecker()
-
-
-
     }
+
     private fun initializeMap(){
         lifecycleScope.launchWhenResumed {
             val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
@@ -138,7 +136,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             binding.start.visibility = View.GONE
             binding.stop.visibility =View.VISIBLE
             lifecycleScope.launch { mLatLng?.getAddress(this@MapsActivity)?.let { address -> showStartNotification(address) }  }
-            showToast("Location set")
+            showToast(getString(R.string.location_set))
         }
         binding.stop.setOnClickListener {
             mLatLng.let {
@@ -148,7 +146,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             binding.stop.visibility = View.GONE
             binding.start.visibility = View.VISIBLE
             cancelNotification()
-            showToast("Location unset")
+            showToast(getString(R.string.location_unset))
 
         }
     }
@@ -241,6 +239,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         viewModel.updateXposedState()
     }
 
+
     private fun aboutDialog(){
         alertDialog = MaterialAlertDialogBuilder(this)
         layoutInflater.inflate(R.layout.about,null).apply {
@@ -286,7 +285,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                     }
 
                 }else {
-                    showToast("No internet connection")
+                    showToast(getString(R.string.no_internet_connection))
                 }
 
             }
@@ -299,8 +298,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
            alertDialog =  MaterialAlertDialogBuilder(this).apply {
                    val view = layoutInflater.inflate(R.layout.search_layout,null)
                    val editText = view.findViewById<EditText>(R.id.search_edittxt)
-                   setTitle("Add favourite")
-                   setPositiveButton("Add") { _, _ ->
+                   setTitle(getString(R.string.add_fav_dialog_title))
+                   setPositiveButton(getString(R.string.dialog_button_add)) { _, _ ->
                        val s = editText.text.toString()
                        if (!mMarker?.isVisible!!){
                            showToast("Not location select")
@@ -321,7 +320,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         favListAdapter = FavListAdapter()
         getAllUpdatedFavList()
         alertDialog = MaterialAlertDialogBuilder(this@MapsActivity)
-        alertDialog.setTitle("Favourites")
+        alertDialog.setTitle(getString(R.string.title_fav))
         val view = layoutInflater.inflate(R.layout.fav,null)
         val  rcv = view.findViewById<RecyclerView>(R.id.favorites_list)
         rcv.layoutManager = LinearLayoutManager(this)
@@ -365,7 +364,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         alertDialog = MaterialAlertDialogBuilder(this@MapsActivity)
         alertDialog.setTitle(R.string.snackbar_update)
         alertDialog.setMessage(update?.changelog)
-        alertDialog.setPositiveButton("Update") { _, _ ->
+        alertDialog.setPositiveButton(getString(R.string.update)) { _, _ ->
             MaterialAlertDialogBuilder(this).apply {
                 val view = layoutInflater.inflate(R.layout.update_dialog, null)
                 val progress = view.findViewById<LinearProgressIndicator>(R.id.update_download_progress)
@@ -439,6 +438,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         }
 
     }
+
+
     private fun cancelNotification(){
        notificationsChannel.cancelAllNotifications(this)
     }
@@ -451,9 +452,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
                 AlertDialog.Builder(this)
-                    .setTitle("Location Permission Needed")
-                    .setMessage("This app needs the Location permission, please accept to use location functionality")
-                    .setPositiveButton("OK") { _, _ ->
+                    .setTitle(getString(R.string.location_permission_title))
+                    .setMessage(getString(R.string.location_permission_msg))
+                    .setPositiveButton(getString(R.string.dialog_button_ok)) { _, _ ->
                         ActivityCompat.requestPermissions(
                             this,
                             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_LOCATION_CODE
@@ -465,9 +466,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             } else ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_LOCATION_CODE)
         }
     }
-
-
-
 
 
 

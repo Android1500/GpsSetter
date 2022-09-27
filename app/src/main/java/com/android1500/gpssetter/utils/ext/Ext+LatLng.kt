@@ -1,15 +1,17 @@
-package com.android1500.gpssetter.ext
+package com.android1500.gpssetter.utils.ext
 
 
 import android.content.Context
 import android.location.Geocoder
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import java.util.*
 
+@OptIn(DelicateCoroutinesApi::class)
 suspend fun LatLng.getAddress(context: Context): String {
     runCatching {
         val address = GlobalScope.async(Dispatchers.IO){
@@ -38,5 +40,5 @@ suspend fun LatLng.getAddress(context: Context): String {
     }.onFailure {
         return "No address found"
     }
-    return "No internet connection"
+    return ""
 }
