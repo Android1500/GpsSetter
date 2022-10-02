@@ -5,25 +5,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.room.Favourite
 
 class FavListAdapter(
-    ) : RecyclerView.Adapter<FavListAdapter.ViewHolder>() {
+    ) : ListAdapter<Favourite,FavListAdapter.ViewHolder>(FavListComparetor()) {
 
-    private var mFavorites = arrayListOf<Favourite>()
     var onItemClick : ((Favourite) -> Unit)? = null
     var onItemDelete : ((Favourite) -> Unit)? = null
 
-
-
-    fun addAllFav(favorites: ArrayList<Favourite>){
-        mFavorites = favorites
-        mFavorites.sortBy {it.address}
-
-
-    }
    inner class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
 
         private val address: TextView = view.findViewById(R.id.address)
@@ -40,6 +33,17 @@ class FavListAdapter(
         }
     }
 
+    class FavListComparetor : DiffUtil.ItemCallback<Favourite>() {
+        override fun areItemsTheSame(oldItem: Favourite, newItem: Favourite): Boolean {
+            return oldItem.address == newItem.address
+        }
+
+        override fun areContentsTheSame(oldItem: Favourite, newItem: Favourite): Boolean {
+            return oldItem == newItem
+        }
+
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.fav_items, parent, false)
@@ -47,10 +51,14 @@ class FavListAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(mFavorites[position])
+        val item = getItem(position)
+        if (item != null){
+            holder.bind(item)
+
+        }
 
     }
 
-    override fun getItemCount() = mFavorites.size
+
 
 }

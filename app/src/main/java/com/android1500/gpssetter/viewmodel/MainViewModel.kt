@@ -11,12 +11,10 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.utils.ext.onDefault
@@ -30,11 +28,7 @@ import com.android1500.gpssetter.update.UpdateChecker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
@@ -63,9 +57,9 @@ class MainViewModel @Inject constructor(
         onIO {
             favouriteRepository.getAllFavourites
                 .catch { e ->
-                    Timber.tag("Error getting all save favourite").d(e.message.toString())
+                    Timber.tag("Error in getting all save favourite").d(e.message.toString())
                 }
-                .collect {
+                .collectLatest {
                     _allFavList.emit(it)
                 }
         }
@@ -104,7 +98,7 @@ class MainViewModel @Inject constructor(
 
 
     private val _update = MutableStateFlow<UpdateChecker.Update?>(null).apply {
-        onDefault {
+        onMain {
             withContext(Dispatchers.IO){
                 updateChecker.clearCachedDownloads(context)
             }
@@ -115,6 +109,7 @@ class MainViewModel @Inject constructor(
     }
 
      val update = _update.asStateFlow()
+
     fun getAvailableUpdate(): UpdateChecker.Update? {
         return _update.value
     }
@@ -242,8 +237,8 @@ class MainViewModel @Inject constructor(
         lat: Double,
         lon: Double
     ) = onIO {
-        val slot: Int
-         val address: String = address
+
+            val slot: Int
             var i = 0
             while (true) {
                 if(getFavouriteSingle(i) == null) {
