@@ -73,7 +73,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
 
 
-    private lateinit var favListAdapter: FavListAdapter
+    private var favListAdapter: FavListAdapter = FavListAdapter()
     private var mMarker: Marker? = null
     private var mLatLng: LatLng? = null
     private var lat by Delegates.notNull<Double>()
@@ -317,7 +317,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
    }
 
     private fun openFavouriteListDialog() {
-        favListAdapter = FavListAdapter()
         getAllUpdatedFavList()
         alertDialog = MaterialAlertDialogBuilder(this@MapsActivity)
         alertDialog.setTitle(getString(R.string.title_fav))
@@ -347,12 +346,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
 
     private fun getAllUpdatedFavList(){
-        this.lifecycleScope.launch {
+        lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED){
                 viewModel.doGetUserDetails()
-                viewModel.allFavList.collect { users->
-                    favListAdapter.addAllFav(ArrayList(users))
-                    favListAdapter.notifyDataSetChanged()
+                viewModel.allFavList.collect {
+                    favListAdapter.submitList(it)
                 }
             }
         }
