@@ -28,7 +28,7 @@ This Module will Support Android 8.1 +
 
 -> Spoof gps location. 
 
--> Material Design UI
+-> Material Design 2
 
 -> Add Favorite Place
 
