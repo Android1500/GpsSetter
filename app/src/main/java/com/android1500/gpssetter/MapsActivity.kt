@@ -1,8 +1,6 @@
 package com.android1500.gpssetter
 
-import android.Manifest
 import android.app.Notification
-import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
@@ -16,9 +14,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -27,10 +23,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapsBinding
+import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.utils.ext.getAddress
 import com.android1500.gpssetter.utils.ext.isNetworkConnected
 import com.android1500.gpssetter.utils.ext.showToast
-import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -44,8 +40,13 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.util.regex.Pattern
 import kotlin.properties.Delegates
 
 
@@ -72,7 +73,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private var xposedDialog: AlertDialog? = null
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
-    private var REQUEST_LOCATION_CODE = 101
 
 
 
@@ -88,13 +88,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     }
 
     private fun initializeMap(){
-        lifecycleScope.launchWhenResumed {
-            val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-            mapFragment.getMapAsync(this@MapsActivity)
-        }
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this@MapsActivity)
+
     }
-
-
 
     private fun isModuleEnable(){
         viewModel.isXposed.observe(this){ isXposed ->
@@ -126,8 +123,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             mMarker?.isVisible = true
             binding.start.visibility = View.GONE
             binding.stop.visibility =View.VISIBLE
-            lifecycleScope.launch { mLatLng?.getAddress(this@MapsActivity)?.let { address -> showStartNotification(address) }  }
-            showToast(getString(R.string.location_set))
+            lifecycleScope.launch {
+                mLatLng?.getAddress(this@MapsActivity)?.let { address ->
+                    address.collect{ value ->
+                        showStartNotification(value)
+                    }
+                }
+            }
+           showToast(getString(R.string.location_set))
         }
         binding.stop.setOnClickListener {
             mLatLng.let {
@@ -141,8 +144,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
         }
     }
-
-
 
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -161,12 +162,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
             }
             setOnMapClickListener(this@MapsActivity)
-            if (ContextCompat.checkSelfPermission(this@MapsActivity, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-                mMap.isMyLocationEnabled = true
-            } else {
-                checkLocationPermission()
-            }
 
             if (viewModel.isStarted){
                 mMarker?.let {
@@ -257,34 +252,28 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             alertDialog.setView(view)
             alertDialog.setPositiveButton("Search") { _, _ ->
                 if (isNetworkConnected()){
-                    lifecycleScope.launch(Dispatchers.IO) {
+                    lifecycleScope.launch {
                         val  getInput = editText.text.toString()
-                        var addresses: List<Address>? = null
-                        try {
-                            addresses = Geocoder(this@MapsActivity).getFromLocationName(getInput, 3)
-                        } catch (ignored: Exception) {
-                        }
-                        withContext(Dispatchers.Main){
-                            if (addresses != null && addresses.isNotEmpty()) {
-                                val address = addresses[0]
-                                lat = address.latitude
-                                lon = address.longitude
-                                moveMapToNewLocation(true)
+                        if (getInput.isNotEmpty()){
+                            getSearchAddress(getInput).let {
+                                it.collect { value ->
+                                    val address = value as Address
+                                    lat = address.latitude
+                                    lon = address.longitude
+                                    moveMapToNewLocation(true)
+                                }
                             }
                         }
-
                     }
-
-                }else {
-                    showToast(getString(R.string.no_internet_connection))
+                } else {
+                    showToast("Internet not connected")
                 }
-
             }
             alertDialog.show()
 
     }
 
-   private fun addFavouriteDialog(){
+    private fun addFavouriteDialog(){
 
            alertDialog =  MaterialAlertDialogBuilder(this).apply {
                    val view = layoutInflater.inflate(R.layout.search_layout,null)
@@ -332,8 +321,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         dialog.show()
 
         }
-
-
 
 
     private fun getAllUpdatedFavList(){
@@ -434,28 +421,40 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     }
 
 
+    private suspend fun getSearchAddress(address: String) = callbackFlow<Any> {
+        withContext(Dispatchers.IO){
+            if (isRegexMatch(address)){
+                val split = address.split(",")
+                mLatLng = LatLng(split[0].toDouble(),split[1].toDouble())
+            }
+            val geocoder = Geocoder(this@MapsActivity)
+            try {
+                val addresses = geocoder.getFromLocationName(address,5)
+                if (address.isEmpty()){
+                    trySend("")
+                }
+                addresses!![0]?.let {
+                    trySend(it)
+                }
 
-    private fun checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.location_permission_title))
-                    .setMessage(getString(R.string.location_permission_msg))
-                    .setPositiveButton(getString(R.string.dialog_button_ok)) { _, _ ->
-                        ActivityCompat.requestPermissions(
-                            this,
-                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_LOCATION_CODE
-                        )
-                    }
-                    .create()
-                    .show()
+            }catch (io : IOException){
+                io.stackTrace
+            }
 
-            } else ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_LOCATION_CODE)
+
         }
+
+        awaitClose { this.cancel() }
+
     }
 
+
+    private fun isRegexMatch(str: String?): Boolean {
+        return Pattern.matches(
+            "[-+]?\\d{1,3}([.]\\d+)?, *[-+]?\\d{1,3}([.]\\d+)?",
+            str!!
+        )
+    }
 
 
 }
