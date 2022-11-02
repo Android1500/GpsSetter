@@ -74,7 +74,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private var xposedDialog: AlertDialog? = null
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
-
+    var listAddress: List<Address>? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -278,7 +278,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                             moveMapToNewLocation(true)
                                         }
                                         is SearchProgress.Fail -> {
-                                            showToast(value.error)
+                                            showToast(value.error!!)
                                             progressBar.cancel()
                                         }
 
@@ -444,7 +444,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     }
 
 
-    private suspend fun getSearchAddress(address: String) = callbackFlow<SearchProgress> {
+    private suspend fun getSearchAddress(address: String) = callbackFlow {
         withContext(Dispatchers.IO){
             trySend(SearchProgress.Progress)
 
@@ -454,15 +454,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             }
 
             try {
-                val addresses = Geocoder(this@MapsActivity).getFromLocationName(address,5)
-                if (address.isEmpty()){
-                   trySend(SearchProgress.Fail(""))
+                val geocoder = Geocoder(this@MapsActivity)
+                listAddress = geocoder.getFromLocationName(address,5)
+                val list: List<Address>? = listAddress
+                if (list == null) {
+                    trySend(SearchProgress.Fail(null))
                 }
-                addresses!![0]?.let {
-                    trySend(SearchProgress.Complete(it))
+                if (list?.size == 1){
+                    trySend(SearchProgress.Complete(list[0]))
+                } else {
+                    if (listAddress?.size != 0) {
+                        trySend(SearchProgress.Fail(null))
+                    }
+                    trySend(SearchProgress.Fail("Address not found"))
                 }
-
-            }catch (io : IOException){
+            } catch (io : IOException){
                trySend(SearchProgress.Fail("No internet"))
             }
         }
@@ -485,7 +491,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 sealed class SearchProgress {
     object Progress : SearchProgress()
     data class Complete(val address: Address) : SearchProgress()
-    data class Fail(val error: String) : SearchProgress()
+    data class Fail(val error: String?) : SearchProgress()
     data class RegexMatch(val lat: Double, val lon: Double) : SearchProgress()
 
 }
