@@ -1,6 +1,7 @@
 package com.android1500.gpssetter
 
 import android.app.Notification
+import android.app.ProgressDialog
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
@@ -248,6 +249,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             alertDialog = MaterialAlertDialogBuilder(this)
             val view = layoutInflater.inflate(R.layout.search_layout,null)
             val editText = view.findViewById<EditText>(R.id.search_edittxt)
+            val progressBar = ProgressDialog(this)
+            progressBar.setMessage("searching...")
             alertDialog.setTitle("Search")
             alertDialog.setView(view)
             alertDialog.setPositiveButton("Search") { _, _ ->
@@ -257,10 +260,30 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                         if (getInput.isNotEmpty()){
                             getSearchAddress(getInput).let {
                                 it.collect { value ->
-                                    val address = value as Address
-                                    lat = address.latitude
-                                    lon = address.longitude
-                                    moveMapToNewLocation(true)
+                                    when(value){
+                                        is SearchProgress.Progress -> {
+                                            progressBar.show()
+                                        }
+                                        is SearchProgress.Complete -> {
+                                            progressBar.cancel()
+                                            val address = value.address
+                                            lat = address.latitude
+                                            lon = address.longitude
+                                            moveMapToNewLocation(true)
+                                        }
+                                        is SearchProgress.RegexMatch -> {
+                                            lat = value.lat
+                                            lon = value.lon
+                                            progressBar.cancel()
+                                            moveMapToNewLocation(true)
+                                        }
+                                        is SearchProgress.Fail -> {
+                                            showToast(value.error)
+                                            progressBar.cancel()
+                                        }
+
+                                    }
+
                                 }
                             }
                         }
@@ -421,27 +444,27 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     }
 
 
-    private suspend fun getSearchAddress(address: String) = callbackFlow<Any> {
+    private suspend fun getSearchAddress(address: String) = callbackFlow<SearchProgress> {
         withContext(Dispatchers.IO){
+            trySend(SearchProgress.Progress)
+
             if (isRegexMatch(address)){
                 val split = address.split(",")
-                mLatLng = LatLng(split[0].toDouble(),split[1].toDouble())
+                trySend(SearchProgress.RegexMatch(split[0].toDouble(),split[1].toDouble()))
             }
-            val geocoder = Geocoder(this@MapsActivity)
+
             try {
-                val addresses = geocoder.getFromLocationName(address,5)
+                val addresses = Geocoder(this@MapsActivity).getFromLocationName(address,5)
                 if (address.isEmpty()){
-                    trySend("")
+                   trySend(SearchProgress.Fail(""))
                 }
                 addresses!![0]?.let {
-                    trySend(it)
+                    trySend(SearchProgress.Complete(it))
                 }
 
             }catch (io : IOException){
-                io.stackTrace
+               trySend(SearchProgress.Fail("No internet"))
             }
-
-
         }
 
         awaitClose { this.cancel() }
@@ -456,6 +479,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         )
     }
 
+
+}
+
+sealed class SearchProgress {
+    object Progress : SearchProgress()
+    data class Complete(val address: Address) : SearchProgress()
+    data class Fail(val error: String) : SearchProgress()
+    data class RegexMatch(val lat: Double, val lon: Double) : SearchProgress()
 
 }
 
