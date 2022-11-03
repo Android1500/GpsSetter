@@ -443,7 +443,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             trySend(SearchProgress.Progress)
             if (isRegexMatch(address)){
                 delay(3000)
-                Log.d("Bhai1",address)
                 trySend(SearchProgress.Complete(address))
             }else {
                 try {
