@@ -15,6 +15,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.utils.ext.onDefault
@@ -29,6 +30,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
@@ -98,7 +100,7 @@ class MainViewModel @Inject constructor(
 
 
     private val _update = MutableStateFlow<UpdateChecker.Update?>(null).apply {
-        onMain {
+        viewModelScope.launch {
             withContext(Dispatchers.IO){
                 updateChecker.clearCachedDownloads(context)
             }
@@ -115,7 +117,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun clearUpdate() {
-        onMain {
+        viewModelScope.launch {
             _update.emit(null)
         }
     }
@@ -137,7 +139,7 @@ class MainViewModel @Inject constructor(
 
     private val downloadStateReceiver = object: BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
-            onMain {
+            viewModelScope.launch {
                 var success = false
                 val query = DownloadManager.Query().apply {
                     setFilterById(requestId ?: return@apply)
@@ -162,9 +164,9 @@ class MainViewModel @Inject constructor(
     private val downloadObserver = object: ContentObserver(Handler(Looper.getMainLooper())) {
         override fun onChange(selfChange: Boolean, uri: Uri?) {
             super.onChange(selfChange, uri)
-            onMain {
+            viewModelScope.launch {
                 val query = DownloadManager.Query()
-                query.setFilterById(requestId ?: return@onMain)
+                query.setFilterById(requestId ?: return@launch)
                 val c: Cursor = downloadManager.query(query)
                 var progress = 0.0
                 if (c.moveToFirst()) {
@@ -181,7 +183,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun downloadUpdate(context: Context, url: String, fileName: String) = onMain {
+    private fun downloadUpdate(context: Context, url: String, fileName: String) = viewModelScope.launch {
         val downloadFolder = File(context.externalCacheDir, "updates").apply {
             mkdirs()
         }
@@ -197,21 +199,24 @@ class MainViewModel @Inject constructor(
         }
     }
 
-
-
     fun openPackageInstaller(context: Context, uri: Uri){
-        Intent(Intent.ACTION_VIEW, uri).apply {
-            putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }.also {
-            context.startActivity(it)
+        runCatching {
+            Intent(Intent.ACTION_VIEW, uri).apply {
+                putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }.also {
+                context.startActivity(it)
+            }
+        }.onFailure {
+            it.printStackTrace()
         }
+
     }
 
     fun cancelDownload(context: Context) {
-        onDefault {
+        viewModelScope.launch {
             requestId?.let {
                 downloadManager.remove(it)
             }
@@ -220,8 +225,6 @@ class MainViewModel @Inject constructor(
             _downloadState.emit(State.Idle)
         }
     }
-
-
 
     sealed class State {
         object Idle: State()
