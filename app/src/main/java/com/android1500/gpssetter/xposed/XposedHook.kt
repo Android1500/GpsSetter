@@ -2,10 +2,7 @@ package com.android1500.gpssetter.xposed
 
 import android.app.AndroidAppHelper
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
@@ -18,6 +15,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import timber.log.Timber
+import java.util.*
+import kotlin.math.cos
 
 
 class XposedHook : IXposedHookLoadPackage {
@@ -25,6 +24,9 @@ class XposedHook : IXposedHookLoadPackage {
     companion object {
         var newlat: Double = 40.7128
         var newlng: Double = 74.0060
+        private const val pi = 3.14159265359
+        private val rand: Random = Random()
+        private const val earth = 6378137.0
         private val settings = Xshare()
         var mLastUpdated: Long = 0
         private const val SHARED_PREFS_FILENAME = "${BuildConfig.APPLICATION_ID}_prefs"
@@ -194,8 +196,13 @@ class XposedHook : IXposedHookLoadPackage {
     private fun updateLocation() {
         try {
             mLastUpdated = System.currentTimeMillis()
-            newlat = settings.getLat
-            newlng = settings.getLng
+            val x = (rand.nextInt(50) - 25).toDouble()
+            val y = (rand.nextInt(50) - 25).toDouble()
+            val dlat = x / earth
+            val dlng = y / (earth * cos(pi * settings.getLat / 180.0))
+            newlat = if (settings.isRandomPosition) settings.getLat + (dlat * 180.0 / pi) else settings.getLat
+            newlng = if (settings.isRandomPosition) settings.getLng + (dlng * 180.0 / pi) else settings.getLng
+
         }catch (e: Exception) {
             Timber.tag("GPS Setter").e(e, "Failed to get XposedSettings for %s", context.packageName)
         }

@@ -1,5 +1,6 @@
 package com.android1500.gpssetter.xposed
 import com.android1500.gpssetter.BuildConfig
+import com.android1500.gpssetter.repository.SettingsRepository
 import de.robv.android.xposed.XSharedPreferences
 
  class Xshare {
@@ -30,7 +31,13 @@ import de.robv.android.xposed.XSharedPreferences
 
      val isHookedSystem : Boolean
      get() = pref().getBoolean(
-         "isHookSystem",
+         "isHookedSystem",
+         false
+     )
+
+     val isRandomPosition :Boolean
+     get() = pref().getBoolean(
+         "random_position",
          false
      )
 

@@ -22,6 +22,7 @@ object SettingsRepository   {
     private const val lat = 40.7128
     private const val lng = 74.0060
     private const val isHookedSystem = "isHookedSystem"
+    private const val isRndPosition = "random_position"
 
      private val pref: SharedPreferences by lazy {
          try {
@@ -53,6 +54,10 @@ object SettingsRepository   {
     var isHookSystem : Boolean
     get() = pref.getBoolean( isHookedSystem, false)
     set(value) { pref.edit().putBoolean(isHookedSystem,value).apply() }
+
+    var isRandomPosition :Boolean
+    get() = pref.getBoolean(isRndPosition, false)
+    set(value) { pref.edit().putBoolean(isRndPosition, value).apply() }
 
 
 

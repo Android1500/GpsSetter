@@ -5,8 +5,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.datastore.core.DataStore
 import androidx.preference.CheckBoxPreference
+import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreference
 import com.android1500.gpssetter.databinding.SettingsActivityBinding
 import com.android1500.gpssetter.repository.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +28,7 @@ class SettingsActivity : AppCompatActivity() {
         override fun getBoolean(key: String?, defValue: Boolean): Boolean {
            return when(key) {
                "isHookedSystem" -> SettingsRepository.isHookSystem
+               "random_position" -> SettingsRepository.isRandomPosition
                else -> throw IllegalArgumentException("Invalid key $key")
            }
         }
@@ -33,6 +36,7 @@ class SettingsActivity : AppCompatActivity() {
         override fun putBoolean(key: String?, value: Boolean) {
             return when(key) {
                 "isHookedSystem" -> SettingsRepository.isHookSystem = value
+                "random_position" -> SettingsRepository.isRandomPosition = value
                 else -> throw IllegalArgumentException("Invalid key $key")
             }
         }
