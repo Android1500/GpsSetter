@@ -7,7 +7,7 @@ plugins {
     id 'kotlin-parcelize'
 }
 
-def tagName = 'v1.1.6'
+def tagName = 'v1.1.7'
 
 android {
     compileSdk 33
@@ -15,8 +15,8 @@ android {
         applicationId "com.android1500.gpssetter"
         minSdk 27
         targetSdk 33
-        versionCode 116
-        versionName "1.1.6"
+        versionCode 117
+        versionName "1.1.7"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "TAG_NAME", "\"${tagName}\"")
     }
