@@ -46,4 +46,5 @@
     <string name="dialog_button_add">Add</string>
     <string name="no_internet_connection">No internet connection</string>
     <string name="location_unset">Location unset</string>
+    <string name="search_hint">"search eg. new york or 37.7749,-122.4194"</string>
 </resources>

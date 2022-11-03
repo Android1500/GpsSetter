@@ -244,10 +244,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     private fun searchDialog(){
             alertDialog = MaterialAlertDialogBuilder(this)
-            val view = layoutInflater.inflate(R.layout.search_layout,null)
+            val view = layoutInflater.inflate(R.layout.dialog_layout,null)
             val editText = view.findViewById<EditText>(R.id.search_edittxt)
+            editText.hint = getString(R.string.search_hint)
             val progressBar = ProgressDialog(this)
-            progressBar.setMessage("searching...")
+            progressBar.setMessage("Searching...")
             alertDialog.setTitle("Search")
             alertDialog.setView(view)
             alertDialog.setPositiveButton("Search") { _, _ ->
@@ -291,7 +292,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private fun addFavouriteDialog(){
 
            alertDialog =  MaterialAlertDialogBuilder(this).apply {
-                   val view = layoutInflater.inflate(R.layout.search_layout,null)
+                   val view = layoutInflater.inflate(R.layout.dialog_layout,null)
                    val editText = view.findViewById<EditText>(R.id.search_edittxt)
                    setTitle(getString(R.string.add_fav_dialog_title))
                    setPositiveButton(getString(R.string.dialog_button_add)) { _, _ ->
