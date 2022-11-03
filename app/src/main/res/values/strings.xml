@@ -47,4 +47,12 @@
     <string name="no_internet_connection">No internet connection</string>
     <string name="location_unset">Location unset</string>
     <string name="search_hint">"search eg. new york or 37.7749,-122.4194"</string>
+
+    <!-- SettingActivity -->
+
+    <string name="xposed">Xposed</string>
+    <string name="advance_hook">Hook system location</string>
+
+
+
 </resources>

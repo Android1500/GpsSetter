@@ -2,16 +2,14 @@ package com.android1500.gpssetter
 
 import android.app.Notification
 import android.app.ProgressDialog
+import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -198,6 +196,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             R.id.add_fav -> addFavouriteDialog()
             R.id.get_favourite -> openFavouriteListDialog()
             R.id.search -> searchDialog()
+            R.id.settings -> startActivity(Intent(this,SettingsActivity::class.java))
 
        }
         return super.onOptionsItemSelected(item)
@@ -268,11 +267,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                             val split = address.split(",")
                                             lat = split[0].toDouble()
                                             lon = split[1].toDouble()
-                                            progressBar.cancel()
+                                            progressBar.dismiss()
                                             moveMapToNewLocation(true)
                                         }
                                         is SearchProgress.Fail -> {
-                                            progressBar.cancel()
+                                           progressBar.dismiss()
                                             showToast(value.error!!)
                                         }
                                     }

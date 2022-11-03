@@ -4,12 +4,17 @@ import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
+lateinit var gsApp: App
+
 
 @HiltAndroidApp
 class App : Application() {
 
+
+
     override fun onCreate() {
         super.onCreate()
+        gsApp = this
         commonInit()
 
     }
@@ -20,5 +25,6 @@ class App : Application() {
                 Timber.plant(Timber.DebugTree())
             }
         }
+
     }
 }

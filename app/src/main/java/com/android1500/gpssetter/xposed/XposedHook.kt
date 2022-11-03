@@ -1,6 +1,7 @@
 package com.android1500.gpssetter.xposed
 
 import android.app.AndroidAppHelper
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -12,6 +13,9 @@ import androidx.annotation.RequiresApi
 import com.android1500.gpssetter.BuildConfig
 import de.robv.android.xposed.*
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import timber.log.Timber
 
@@ -35,6 +39,65 @@ class XposedHook : IXposedHookLoadPackage {
              setupSelfHooks(lpparam.classLoader)
         }
 
+        if (settings.isHookedSystem && lpparam?.packageName.equals("android")){
+            XposedBridge.log("Inside --> System")
+
+            XposedHelpers.findAndHookMethod(
+                "com.android.server.LocationManagerService",
+                lpparam?.classLoader,
+                "getLastLocation",
+                "android.location.LocationRequest",
+                String::class.java, object : XC_MethodHook() {
+                    @Throws(Throwable::class)
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        if (settings.isStarted) {
+                            XposedBridge.log("Inside --> getLastKnowLocation")
+                            val location = Location(LocationManager.GPS_PROVIDER)
+                            location.time = System.currentTimeMillis() - (100..10000).random()
+                            location.latitude = newlat
+                            location.longitude = newlng
+                            location.altitude = 0.0
+                            location.speed = 0F
+                            location.speedAccuracyMetersPerSecond = 0F
+                            param.result = location
+
+                        }
+                    }
+                })
+
+            XposedHelpers.findAndHookMethod(
+                "com.android.server.LocationManagerService",
+                lpparam?.classLoader,
+                "requestLocationUpdates",
+                "android.location.LocationRequest",
+                "android.location.ILocationListener",
+                PendingIntent::class.java,
+                String::class.java,
+                object : XC_MethodHook(){
+                    override fun beforeHookedMethod(param: MethodHookParam?) {
+                        super.beforeHookedMethod(param)
+                        val ILocationListener = param!!.args[1]
+                        val location = Location(LocationManager.GPS_PROVIDER)
+                        location.time = System.currentTimeMillis() - (100..10000).random()
+                        location.latitude = newlat
+                        location.longitude = newlng
+                        location.altitude = 0.0
+                        location.speed = 0F
+                        location.speedAccuracyMetersPerSecond = 0F
+                        param.result = location
+                        GlobalScope.launch(Dispatchers.IO) {
+                            XposedHelpers.callMethod(ILocationListener,"onLocationChanged",location)
+                            XposedBridge.log("Inside --> ILocationListener")
+                        }
+
+                    }
+                }
+
+            )
+
+
+        }
+
 
         XposedHelpers.findAndHookMethod(Location::class.java,"getLatitude", object : XC_MethodHook(){
             override fun beforeHookedMethod(param: MethodHookParam?) {
@@ -46,7 +109,6 @@ class XposedHook : IXposedHookLoadPackage {
                     param?.result = newlat
 
                 }
-
 
             }
         })

@@ -28,6 +28,12 @@ import de.robv.android.xposed.XSharedPreferences
          114.1576900.toFloat()
      ).toDouble()
 
+     val isHookedSystem : Boolean
+     get() = pref().getBoolean(
+         "isHookSystem",
+         false
+     )
+
 
 
 

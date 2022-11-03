@@ -4,38 +4,35 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import com.android1500.gpssetter.BuildConfig
+import com.android1500.gpssetter.gsApp
 import com.android1500.gpssetter.selfhook.XposedSelfHooks
 import dagger.Reusable
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.File
-import javax.inject.Inject
 
 
 @SuppressLint("WorldReadableFiles")
 @Reusable
-class SettingsRepository  @Inject constructor(
-    @ApplicationContext private val context: Context)  {
+object SettingsRepository   {
 
-    companion object {
-        private const val start = false
-        private const val lat = 40.7128
-        private const val lng = 74.0060
-    }
+    private const val start = false
+    private const val lat = 40.7128
+    private const val lng = 74.0060
+    private const val isHookedSystem = "isHookedSystem"
 
-     private val sharedPreferences: SharedPreferences by lazy {
+     private val pref: SharedPreferences by lazy {
          try {
              val prefsFile = "${BuildConfig.APPLICATION_ID}_prefs"
-             context.getSharedPreferences(
+             gsApp.getSharedPreferences(
                  prefsFile,
                  Context.MODE_WORLD_READABLE
              )
          }catch (e:SecurityException){
              val prefsFile = "${BuildConfig.APPLICATION_ID}_prefs"
-             context.getSharedPreferences(
+             gsApp.getSharedPreferences(
                  prefsFile,
                  Context.MODE_PRIVATE
              )
@@ -43,19 +40,25 @@ class SettingsRepository  @Inject constructor(
 
     }
 
+
     val isStarted : Boolean
-    get() = sharedPreferences.getBoolean("start", start)
+    get() = pref.getBoolean("start", start)
 
     val getLat : Double
-    get() = sharedPreferences.getFloat("latitude", lat.toFloat()).toDouble()
+    get() = pref.getFloat("latitude", lat.toFloat()).toDouble()
 
     val getLng : Double
-    get() = sharedPreferences.getFloat("longitude", lng.toFloat()).toDouble()
+    get() = pref.getFloat("longitude", lng.toFloat()).toDouble()
+
+    var isHookSystem : Boolean
+    get() = pref.getBoolean( isHookedSystem, false)
+    set(value) { pref.edit().putBoolean(isHookedSystem,value).apply() }
+
 
 
     fun update(start:Boolean, la: Double, ln: Double) {
         runInBackground {
-            val prefEditor = sharedPreferences.edit()
+            val prefEditor = pref.edit()
             prefEditor.putFloat("latitude", la.toFloat())
             prefEditor.putFloat("longitude", ln.toFloat())
             prefEditor.putBoolean("start", start)
