@@ -269,10 +269,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                             progressBar.cancel()
                                             moveMapToNewLocation(true)
                                         }
-//
                                         is SearchProgress.Fail -> {
-                                            showToast(value.error!!)
                                             progressBar.cancel()
+                                            showToast(value.error!!)
                                         }
 
                                     }
@@ -475,10 +474,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     }
 
 
-    private fun isRegexMatch(str: String?): Boolean {
+    private fun isRegexMatch(input: String?): Boolean {
         return Pattern.matches(
             "[-+]?\\d{1,3}([.]\\d+)?, *[-+]?\\d{1,3}([.]\\d+)?",
-            str!!
+            input!!
         )
     }
 
