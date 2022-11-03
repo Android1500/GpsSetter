@@ -203,7 +203,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         return super.onOptionsItemSelected(item)
     }
 
-    private inline fun moveMapToNewLocation(moveNewLocation: Boolean) {
+    private fun moveMapToNewLocation(moveNewLocation: Boolean) {
         if (moveNewLocation) {
             mLatLng = LatLng(lat, lon)
             mLatLng.let { latLng ->
@@ -275,9 +275,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                             progressBar.cancel()
                                             showToast(value.error!!)
                                         }
-
                                     }
-
                                 }
                             }
                         }
