@@ -5,6 +5,7 @@ import android.app.ProgressDialog
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -442,31 +443,35 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             trySend(SearchProgress.Progress)
             if (isRegexMatch(address)){
                 delay(3000)
+                Log.d("Bhai1",address)
                 trySend(SearchProgress.Complete(address))
-            }
-            try {
-                val geocoder = Geocoder(this@MapsActivity)
-                addressList = geocoder.getFromLocationName(address,5)
-                val list: List<Address>? = addressList
-                if (list == null) {
-                    trySend(SearchProgress.Fail(null))
-                }
-                if (list?.size == 1){
-                    val sb = StringBuilder()
-                    sb.append(list[0].latitude)
-                    sb.append(",")
-                    sb.append(list[0].longitude)
-                    trySend(SearchProgress.Complete(sb.toString()))
-                } else {
-                    if (addressList?.size != 0) {
+            }else {
+                try {
+                    val geocoder = Geocoder(this@MapsActivity)
+                    addressList = geocoder.getFromLocationName(address,5)
+                    val list: List<Address>? = addressList
+                    if (list == null) {
                         trySend(SearchProgress.Fail(null))
                     }
-                    trySend(SearchProgress.Fail("Address not found"))
+                    if (list?.size == 1){
+                        val sb = StringBuilder()
+                        sb.append(list[0].latitude)
+                        sb.append(",")
+                        sb.append(list[0].longitude)
+                        trySend(SearchProgress.Complete(sb.toString()))
+                    } else {
+                        if (addressList?.size != 0) {
+                            trySend(SearchProgress.Fail(null))
+                        }
+                        trySend(SearchProgress.Fail("Address not found"))
+                    }
+                } catch (io : IOException){
+                    io.printStackTrace()
+                    trySend(SearchProgress.Fail("No internet"))
                 }
-            } catch (io : IOException){
-                io.printStackTrace()
-                trySend(SearchProgress.Fail("No internet"))
+
             }
+
         }
 
         awaitClose { this.cancel() }
