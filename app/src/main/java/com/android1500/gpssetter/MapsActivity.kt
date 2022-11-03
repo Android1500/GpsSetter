@@ -455,7 +455,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                     sb.append(list[0].latitude)
                     sb.append(",")
                     sb.append(list[0].longitude)
-                    delay(3000)
                     trySend(SearchProgress.Complete(sb.toString()))
                 } else {
                     if (addressList?.size != 0) {
