@@ -5,8 +5,18 @@
     <PreferenceCategory android:title="@string/preference_category_general">
 
         <rikka.preference.SimpleMenuPreference
+            android:defaultValue="-1"
+            android:entries="@array/theme_texts"
+            android:entryValues="@array/theme_values"
+            android:icon="@drawable/outline_dark_mode_24"
+            android:key="darkTheme"
+            android:summary="%s"
+            android:title="@string/dark_theme" />
+
+        <rikka.preference.SimpleMenuPreference
             android:title="Map"
-            android:summary="%s"            android:icon="@drawable/ic_map_type"
+            android:summary="%s"
+            android:icon="@drawable/ic_map_type"
             android:key="map_type"
             android:dialogTitle="Map type"
             android:entries="@array/map_type"
