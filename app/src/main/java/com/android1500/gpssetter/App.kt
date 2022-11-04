@@ -1,7 +1,10 @@
 package com.android1500.gpssetter
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
+import com.android1500.gpssetter.utils.PrefManager
 import dagger.hilt.android.HiltAndroidApp
+import rikka.material.app.DayNightDelegate
 import timber.log.Timber
 
 lateinit var gsApp: App
@@ -9,15 +12,6 @@ lateinit var gsApp: App
 
 @HiltAndroidApp
 class App : Application() {
-
-
-
-    override fun onCreate() {
-        super.onCreate()
-        gsApp = this
-        commonInit()
-
-    }
 
     companion object {
         fun commonInit() {
@@ -27,4 +21,15 @@ class App : Application() {
         }
 
     }
+
+
+    override fun onCreate() {
+        super.onCreate()
+        gsApp = this
+        commonInit()
+        AppCompatDelegate.setDefaultNightMode(PrefManager.darkTheme)
+
+    }
+
+
 }

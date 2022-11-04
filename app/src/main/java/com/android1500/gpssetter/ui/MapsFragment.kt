@@ -2,33 +2,34 @@ package com.android1500.gpssetter
 
 import android.app.Notification
 import android.app.ProgressDialog
-import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
+import androidx.fragment.app.Fragment
+
 import android.os.Bundle
-import android.view.Menu
+import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
-import android.widget.*
-import androidx.activity.viewModels
+import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.app.NotificationCompat
-import androidx.core.view.WindowCompat
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import by.kirich1409.viewbindingdelegate.viewBinding
 import com.android1500.gpssetter.adapter.FavListAdapter
-import com.android1500.gpssetter.databinding.ActivityMapsBinding
-import com.android1500.gpssetter.ui.SettingsActivity
+import com.android1500.gpssetter.databinding.FragmentMapsBinding
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.utils.PrefManager
-import com.android1500.gpssetter.utils.ext.getAddress
-import com.android1500.gpssetter.utils.ext.isNetworkConnected
-import com.android1500.gpssetter.utils.ext.showToast
+import com.android1500.gpssetter.utils.ext.*
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -50,13 +51,11 @@ import kotlin.properties.Delegates
 
 
 @AndroidEntryPoint
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener{
+class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, GoogleMap.OnMapClickListener {
 
     private lateinit var mMap: GoogleMap
     private val viewModel by viewModels<MainViewModel>()
-    private val binding by lazy {
-        ActivityMapsBinding.inflate(layoutInflater)
-    }
+    private val binding by viewBinding<FragmentMapsBinding> {  }
     private val update by lazy {
         viewModel.getAvailableUpdate()
     }
@@ -74,30 +73,48 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     private lateinit var dialog: AlertDialog
     private var addressList: List<Address>? = null
 
+    private fun onMenuOptionSelected(item: MenuItem) {
+        when(item.itemId){
+            R.id.about -> aboutDialog()
+            R.id.add_fav -> addFavouriteDialog()
+            R.id.get_favourite -> openFavouriteListDialog()
+            R.id.search -> searchDialog()
+            R.id.settings -> navController.navigate(R.id.action_mapsFragment_to_settingsFragment)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
+        }
+
+    }
+
+
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupToolbar (
+            toolbar = binding.toolbar,
+            title = getString(R.string.app_name),
+            menuRes = R.menu.main_menu,
+            onMenuOptionSelected = this::onMenuOptionSelected
+
+        )
         initializeMap()
         setFloatActionButton()
         isModuleEnable()
         updateChecker()
-    }
-
-    private fun initializeMap(){
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this@MapsActivity)
 
     }
+
+    private fun initializeMap() {
+        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
+        mapFragment?.getMapAsync(this)
+    }
+
 
     private fun isModuleEnable(){
-        viewModel.isXposed.observe(this){ isXposed ->
+        viewModel.isXposed.observe(requireActivity()){ isXposed ->
             xposedDialog?.dismiss()
             xposedDialog = null
             if (!isXposed){
-                xposedDialog = MaterialAlertDialogBuilder(this).run {
+                xposedDialog = MaterialAlertDialogBuilder(requireContext()).run {
                     setTitle(R.string.error_xposed_module_missing)
                     setMessage(R.string.error_xposed_module_missing_desc)
                     setCancelable(BuildConfig.DEBUG)
@@ -123,13 +140,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             binding.start.visibility = View.GONE
             binding.stop.visibility =View.VISIBLE
             lifecycleScope.launch {
-                mLatLng?.getAddress(this@MapsActivity)?.let { address ->
+                mLatLng?.getAddress(requireContext())?.let { address ->
                     address.collect{ value ->
                         showStartNotification(value)
                     }
                 }
             }
-           showToast(getString(R.string.location_set))
+            requireContext().showToast(getString(R.string.location_set))
         }
         binding.stop.setOnClickListener {
             mLatLng.let {
@@ -139,7 +156,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
             binding.stop.visibility = View.GONE
             binding.start.visibility = View.VISIBLE
             cancelNotification()
-            showToast(getString(R.string.location_unset))
+            requireContext().showToast(getString(R.string.location_unset))
 
         }
     }
@@ -161,7 +178,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
 
             }
-            setOnMapClickListener(this@MapsActivity)
+            setOnMapClickListener(this@MapsFragment)
 
             if (viewModel.isStarted){
                 mMarker?.let {
@@ -170,40 +187,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                 }
             }
         }
-
     }
 
-    override fun onMapClick(p0: LatLng) {
-            mLatLng = p0
-            mMarker?.let { marker ->
-                mLatLng.let {
-                    marker.position = it!!
-                    marker.isVisible = true
-                    mMap.animateCamera(CameraUpdateFactory.newLatLng(it))
-                    lat = it.latitude
-                    lon = it.longitude
-                }
+    override fun onMapClick(latLng: LatLng) {
+        mLatLng = latLng
+        mMarker?.let { marker ->
+            mLatLng.let {
+                marker.position = it!!
+                marker.isVisible = true
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(it))
+                lat = it.latitude
+                lon = it.longitude
             }
-
+        }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main_menu,menu)
-        return super.onCreateOptionsMenu(menu)
-    }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
-        when(item.itemId){
-            R.id.about -> aboutDialog()
-            R.id.add_fav -> addFavouriteDialog()
-            R.id.get_favourite -> openFavouriteListDialog()
-            R.id.search -> searchDialog()
-            R.id.settings -> startActivity(Intent(this, SettingsActivity::class.java))
 
-       }
-        return super.onOptionsItemSelected(item)
-    }
 
     private fun moveMapToNewLocation(moveNewLocation: Boolean) {
         if (moveNewLocation) {
@@ -221,14 +222,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
 
     }
 
+
     override fun onResume() {
         super.onResume()
         viewModel.updateXposedState()
     }
 
 
+
+
     private fun aboutDialog(){
-        alertDialog = MaterialAlertDialogBuilder(this)
+        alertDialog = MaterialAlertDialogBuilder(requireContext())
         layoutInflater.inflate(R.layout.about,null).apply {
             val  tittle = findViewById<TextView>(R.id.design_about_title)
             val  version = findViewById<TextView>(R.id.design_about_version)
@@ -245,82 +249,84 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     }
 
 
+
     private fun searchDialog() {
-            alertDialog = MaterialAlertDialogBuilder(this)
-            val view = layoutInflater.inflate(R.layout.dialog_layout,null)
-            val editText = view.findViewById<EditText>(R.id.search_edittxt)
-            editText.hint = getString(R.string.search_hint)
-            val progressBar = ProgressDialog(this)
-            progressBar.setMessage("Searching...")
-            alertDialog.setTitle("Search")
-            alertDialog.setView(view)
-            alertDialog.setPositiveButton("Search") { _, _ ->
-                if (isNetworkConnected()){
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        val  getInput = editText.text.toString()
-                        if (getInput.isNotEmpty()){
-                            getSearchAddress(getInput).let {
-                                it.collect { result ->
-                                    when(result) {
-                                        is SearchProgress.Progress -> {
-                                            progressBar.show()
-                                        }
-                                        is SearchProgress.Complete -> {
-                                            val address = result.address
-                                            val split = address.split(",")
-                                            lat = split[0].toDouble()
-                                            lon = split[1].toDouble()
-                                            progressBar.dismiss()
-                                            moveMapToNewLocation(true)
-                                        }
-                                        is SearchProgress.Fail -> {
-                                           progressBar.dismiss()
-                                            showToast(result.error!!)
-                                        }
-                                        else -> {}
+        alertDialog = MaterialAlertDialogBuilder(requireContext())
+        val view = layoutInflater.inflate(R.layout.dialog_layout,null)
+        val editText = view.findViewById<EditText>(R.id.search_edittxt)
+        editText.hint = getString(R.string.search_hint)
+        val progressBar = ProgressDialog(requireContext())
+        progressBar.setMessage("Searching...")
+        alertDialog.setTitle("Search")
+        alertDialog.setView(view)
+        alertDialog.setPositiveButton("Search") { _, _ ->
+            if (requireContext().isNetworkConnected()){
+                lifecycleScope.launch(Dispatchers.Main) {
+                    val  getInput = editText.text.toString()
+                    if (getInput.isNotEmpty()){
+                        getSearchAddress(getInput).let {
+                            it.collect { result ->
+                                when(result) {
+                                    is SearchProgress.Progress -> {
+                                        progressBar.show()
                                     }
+                                    is SearchProgress.Complete -> {
+                                        val address = result.address
+                                        val split = address.split(",")
+                                        lat = split[0].toDouble()
+                                        lon = split[1].toDouble()
+                                        progressBar.dismiss()
+                                        moveMapToNewLocation(true)
+                                    }
+                                    is SearchProgress.Fail -> {
+                                        progressBar.dismiss()
+                                        requireContext().showToast(result.error!!)
+                                    }
+                                    else -> {}
                                 }
                             }
                         }
                     }
-                } else {
-                    showToast("Internet not connected")
                 }
+            } else {
+                requireContext().showToast("Internet not connected")
             }
-            alertDialog.show()
+        }
+        alertDialog.show()
 
     }
 
     private fun addFavouriteDialog(){
 
-           alertDialog =  MaterialAlertDialogBuilder(this).apply {
-                   val view = layoutInflater.inflate(R.layout.dialog_layout,null)
-                   val editText = view.findViewById<EditText>(R.id.search_edittxt)
-                   setTitle(getString(R.string.add_fav_dialog_title))
-                   setPositiveButton(getString(R.string.dialog_button_add)) { _, _ ->
-                       val s = editText.text.toString()
-                       if (!mMarker?.isVisible!!){
-                           showToast("Not location select")
-                       }else{
-                           viewModel.storeFavorite(s, lat, lon)
-                           viewModel.response.observe(this@MapsActivity){
-                               if (it == (-1).toLong()) showToast("Can't save") else showToast("Save")
-                           }
-                       }
-               }
-               setView(view)
-               show()
-       }
+        alertDialog =  MaterialAlertDialogBuilder(requireContext()).apply {
+            val view = layoutInflater.inflate(R.layout.dialog_layout,null)
+            val editText = view.findViewById<EditText>(R.id.search_edittxt)
+            setTitle(getString(R.string.add_fav_dialog_title))
+            setPositiveButton(getString(R.string.dialog_button_add)) { _, _ ->
+                val s = editText.text.toString()
+                if (!mMarker?.isVisible!!){
+                    requireContext().showToast("Not location select")
+                }else{
+                    viewModel.storeFavorite(s, lat, lon)
+                    viewModel.response.observe(requireActivity()){
+                        if (it == (-1).toLong()) requireContext().showToast("Can't save") else requireContext().showToast("Save")
+                    }
+                }
+            }
+            setView(view)
+            show()
+        }
 
-   }
+    }
+
 
     private fun openFavouriteListDialog() {
         getAllUpdatedFavList()
-        alertDialog = MaterialAlertDialogBuilder(this@MapsActivity)
+        alertDialog = MaterialAlertDialogBuilder(requireContext())
         alertDialog.setTitle(getString(R.string.title_fav))
         val view = layoutInflater.inflate(R.layout.fav,null)
         val  rcv = view.findViewById<RecyclerView>(R.id.favorites_list)
-        rcv.layoutManager = LinearLayoutManager(this)
+        rcv.layoutManager = LinearLayoutManager(requireContext())
         rcv.adapter = favListAdapter
         favListAdapter.onItemClick = {
             it.let {
@@ -338,7 +344,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         dialog = alertDialog.create()
         dialog.show()
 
-        }
+    }
 
 
     private fun getAllUpdatedFavList(){
@@ -354,18 +360,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     }
 
 
+
+
     private fun updateDialog(){
-        alertDialog = MaterialAlertDialogBuilder(this@MapsActivity)
+        alertDialog = MaterialAlertDialogBuilder(requireContext())
         alertDialog.setTitle(R.string.snackbar_update)
         alertDialog.setMessage(update?.changelog)
         alertDialog.setPositiveButton(getString(R.string.update)) { _, _ ->
-            MaterialAlertDialogBuilder(this).apply {
+            MaterialAlertDialogBuilder(requireContext()).apply {
                 val view = layoutInflater.inflate(R.layout.update_dialog, null)
                 val progress = view.findViewById<LinearProgressIndicator>(R.id.update_download_progress)
                 val cancel = view.findViewById<AppCompatButton>(R.id.update_download_cancel)
                 setView(view)
                 cancel.setOnClickListener {
-                    viewModel.cancelDownload(this@MapsActivity)
+                    viewModel.cancelDownload(requireContext())
                     dialog.dismiss()
                 }
                 lifecycleScope.launch {
@@ -378,14 +386,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                                 }
                             }
                             is MainViewModel.State.Done -> {
-                                viewModel.openPackageInstaller(this@MapsActivity, it.fileUri)
+                                viewModel.openPackageInstaller(requireContext(), it.fileUri)
                                 viewModel.clearUpdate()
                                 dialog.dismiss()
                             }
 
                             is MainViewModel.State.Failed -> {
                                 Toast.makeText(
-                                    this@MapsActivity,
+                                    requireContext(),
                                     R.string.bs_update_download_failed,
                                     Toast.LENGTH_LONG
                                 ).show()
@@ -397,7 +405,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                     }
                 }
                 update?.let { it ->
-                    viewModel.startDownload(this@MapsActivity, it)
+                    viewModel.startDownload(requireContext(), it)
                 } ?: run {
                     dialog.dismiss()
                 }
@@ -421,22 +429,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
         }
     }
 
-    private fun showStartNotification(address: String){
-        notificationsChannel.showNotification(this){
-            it.setSmallIcon(R.drawable.ic_stop)
-            it.setContentTitle(getString(R.string.location_set))
-            it.setContentText(address)
-            it.setAutoCancel(true)
-            it.setCategory(Notification.CATEGORY_EVENT)
-            it.priority = NotificationCompat.PRIORITY_HIGH
-        }
-
-    }
 
 
-    private fun cancelNotification(){
-       notificationsChannel.cancelAllNotifications(this)
-    }
+
+
 
 
     private suspend fun getSearchAddress(address: String) = callbackFlow {
@@ -447,7 +443,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
                 trySend(SearchProgress.Complete(address))
             }else {
                 try {
-                    val geocoder = Geocoder(this@MapsActivity)
+                    val geocoder = Geocoder(requireContext())
                     addressList = geocoder.getFromLocationName(address,5)
                     val list: List<Address>? = addressList
                     if (list == null) {
@@ -484,6 +480,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapCli
     }
 
 
+
+
+
+    private fun showStartNotification(address: String){
+        notificationsChannel.showNotification(requireContext()){
+            it.setSmallIcon(R.drawable.ic_stop)
+            it.setContentTitle(getString(R.string.location_set))
+            it.setContentText(address)
+            it.setAutoCancel(true)
+            it.setCategory(Notification.CATEGORY_EVENT)
+            it.priority = NotificationCompat.PRIORITY_HIGH
+        }
+
+    }
+
+
+    private fun cancelNotification(){
+        notificationsChannel.cancelAllNotifications(requireContext())
+    }
+
+
+
+
 }
 
 sealed class SearchProgress {
@@ -492,13 +511,3 @@ sealed class SearchProgress {
     data class Fail(val error: String?) : SearchProgress()
 
 }
-
-
-
-
-
-
-
-
-
-

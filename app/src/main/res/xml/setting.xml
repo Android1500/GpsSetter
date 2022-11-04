@@ -8,7 +8,7 @@
             android:defaultValue="-1"
             android:entries="@array/theme_texts"
             android:entryValues="@array/theme_values"
-            android:icon="@drawable/outline_dark_mode_24"
+            android:icon="@drawable/ic_dark_mode"
             android:key="darkTheme"
             android:summary="%s"
             android:title="@string/dark_theme" />

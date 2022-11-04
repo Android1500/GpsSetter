@@ -11,6 +11,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import rikka.material.app.DayNightDelegate
 import java.io.File
 
 
@@ -25,6 +26,7 @@ object PrefManager   {
     private const val RANDOM_POSITION = "random_position"
     private const val ACCURACY_SETTING = "accuracy_settings"
     private const val MAP_TYPE = "map_type"
+    private const val DARK_THEME = "dark_theme"
 
 
     private val pref: SharedPreferences by lazy {
@@ -69,6 +71,10 @@ object PrefManager   {
     var mapType : Int
     get() = pref.getInt(MAP_TYPE,1)
     set(value) { pref.edit().putInt(MAP_TYPE,value).apply()}
+
+    var darkTheme: Int
+        get() = pref.getInt(DARK_THEME, DayNightDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        set(value) = pref.edit().putInt(DARK_THEME, value).apply()
 
 
     fun update(start:Boolean, la: Double, ln: Double) {

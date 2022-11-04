@@ -53,6 +53,10 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha04'
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
+    // Kotlin
+    implementation "androidx.navigation:navigation-fragment-ktx:2.5.3"
+    implementation "androidx.navigation:navigation-ui-ktx:2.5.3"
+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
@@ -87,6 +91,8 @@ dependencies {
         exclude group: "dev.rikka.rikkax.appcompat", module: "appcompat"
         exclude group: "androidx.lifecycle", module: "lifecycle-viewmodel-ktx"
     }
+
+    implementation 'com.github.kirich1409:viewbindingpropertydelegate:1.5.6'
 
 
 

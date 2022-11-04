@@ -5,32 +5,55 @@ import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.text.method.DigitsKeyListener
+import android.view.View
 import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.WindowCompat
+import androidx.activity.addCallback
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.fragment.app.Fragment
 import androidx.preference.EditTextPreference
-import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
+import by.kirich1409.viewbindingdelegate.viewBinding
 import com.android1500.gpssetter.R
-import com.android1500.gpssetter.databinding.SettingsActivityBinding
+import com.android1500.gpssetter.databinding.FragmentSettingBinding
 import com.android1500.gpssetter.utils.PrefManager
+import com.android1500.gpssetter.utils.ext.navController
+import com.android1500.gpssetter.utils.ext.setupToolbar
 import rikka.preference.SimpleMenuPreference
 
+class SettingsFragment : Fragment(R.layout.fragment_setting) {
 
-class SettingsActivity : AppCompatActivity() {
-    private val binding by lazy {
-        SettingsActivityBinding.inflate(layoutInflater)
+    private val binding by viewBinding<FragmentSettingBinding>()
+     private fun onBack() {
+        navController.navigateUp()
     }
+
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupToolbar(
+            toolbar = binding.toolbar,
+            title = getString(R.string.settings),
+            navigationIcon = R.drawable.ic_back_arrow,
+            navigationOnClick = {onBack()}
+        )
+
+        if (childFragmentManager.findFragmentById(R.id.settings_container) == null) {
+            childFragmentManager.beginTransaction()
+                .replace(R.id.settings_container, SettingsPreferenceFragment())
+                .commit()
+        }
+    }
+
 
     class SettingPreferenceDataStore() : PreferenceDataStore() {
         override fun getBoolean(key: String?, defValue: Boolean): Boolean {
-           return when(key) {
-               "isHookedSystem" -> PrefManager.isHookSystem
-               "random_position" -> PrefManager.isRandomPosition
-               else -> throw IllegalArgumentException("Invalid key $key")
-           }
+            return when(key) {
+                "isHookedSystem" -> PrefManager.isHookSystem
+                "random_position" -> PrefManager.isRandomPosition
+                else -> throw IllegalArgumentException("Invalid key $key")
+            }
         }
 
         override fun putBoolean(key: String?, value: Boolean) {
@@ -45,6 +68,7 @@ class SettingsActivity : AppCompatActivity() {
             return when(key){
                 "accuracy_settings" -> PrefManager.accuracy
                 "map_type" -> PrefManager.mapType.toString()
+                "darkTheme" -> PrefManager.darkTheme.toString()
                 else -> throw IllegalArgumentException("Invalid key $key")
             }
         }
@@ -53,6 +77,7 @@ class SettingsActivity : AppCompatActivity() {
             return when(key){
                 "accuracy_settings" -> PrefManager.accuracy = value
                 "map_type" -> PrefManager.mapType = value!!.toInt()
+                "darkTheme" -> PrefManager.darkTheme = value!!.toInt()
                 else -> throw IllegalArgumentException("Invalid key $key")
             }
         }
@@ -60,22 +85,7 @@ class SettingsActivity : AppCompatActivity() {
 
     }
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        setContentView(binding.root)
-        setSupportActionBar(binding.toolbar)
-        if (savedInstanceState == null) {
-            supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.settings, SettingsFragment())
-                .commit()
-        }
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-    }
-
-    class SettingsFragment : PreferenceFragmentCompat() {
+    class SettingsPreferenceFragment : PreferenceFragmentCompat() {
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             preferenceManager?.preferenceDataStore = SettingPreferenceDataStore()
@@ -103,6 +113,20 @@ class SettingsActivity : AppCompatActivity() {
             }
 
 
+            findPreference<SimpleMenuPreference>("darkTheme")?.setOnPreferenceChangeListener { _, newValue ->
+                val newMode = (newValue as String).toInt()
+                if (PrefManager.darkTheme != newMode) {
+                    AppCompatDelegate.setDefaultNightMode(newMode)
+                    activity?.recreate()
+                }
+                true
+            }
+            findPreference<SimpleMenuPreference>("map_type")?.setOnPreferenceChangeListener { _, newValue ->
+                activity?.recreate()
+                true
+            }
+
+
         }
 
 
@@ -125,4 +149,3 @@ class SettingsActivity : AppCompatActivity() {
     }
 
 }
-
