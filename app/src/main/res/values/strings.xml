@@ -52,7 +52,10 @@
 
     <string name="xposed">Xposed</string>
     <string name="advance_hook">Hook system location</string>
-
+    <string name="settings">Settings</string>
+    <string name="settings_of_accuracy">Accuracy</string>
+    <string name="preference_category_general">General</string>
+    <string name="enter_valid_input">Enter valid number</string>
 
 
 </resources>

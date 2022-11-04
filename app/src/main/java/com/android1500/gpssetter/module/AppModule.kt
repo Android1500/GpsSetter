@@ -5,7 +5,7 @@ import android.app.DownloadManager
 import android.content.Context
 import androidx.room.Room
 import com.android1500.gpssetter.module.util.ApplicationScope
-import com.android1500.gpssetter.repository.SettingsRepository
+import com.android1500.gpssetter.utils.PrefManager
 import com.android1500.gpssetter.room.AppDatabase
 import com.android1500.gpssetter.room.FavouriteDao
 import com.android1500.gpssetter.update.GitHubService
@@ -64,8 +64,8 @@ object AppModule{
 
     @Singleton
     @Provides
-    fun provideSettingRepo() : SettingsRepository =
-        SettingsRepository
+    fun provideSettingRepo() : PrefManager =
+        PrefManager
 
     @ApplicationScope
     @Provides

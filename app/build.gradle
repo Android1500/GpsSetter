@@ -83,6 +83,11 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
 
+    implementation ("dev.rikka.rikkax.material:material-preference:2.0.0") {
+        exclude group: "dev.rikka.rikkax.appcompat", module: "appcompat"
+        exclude group: "androidx.lifecycle", module: "lifecycle-viewmodel-ktx"
+    }
+
 
 
 

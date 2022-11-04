@@ -25,6 +25,7 @@ class XposedHook : IXposedHookLoadPackage {
         var newlat: Double = 40.7128
         var newlng: Double = 74.0060
         private const val pi = 3.14159265359
+        private var accuracy : Float = 0.0f
         private val rand: Random = Random()
         private const val earth = 6378137.0
         private val settings = Xshare()
@@ -42,6 +43,7 @@ class XposedHook : IXposedHookLoadPackage {
         }
 
         if (settings.isHookedSystem && lpparam?.packageName.equals("android")){
+
             XposedBridge.log("Inside --> System")
 
             XposedHelpers.findAndHookMethod(
@@ -60,6 +62,7 @@ class XposedHook : IXposedHookLoadPackage {
                             location.longitude = newlng
                             location.altitude = 0.0
                             location.speed = 0F
+                            location.accuracy = accuracy
                             location.speedAccuracyMetersPerSecond = 0F
                             param.result = location
 
@@ -86,6 +89,7 @@ class XposedHook : IXposedHookLoadPackage {
                         location.altitude = 0.0
                         location.speed = 0F
                         location.speedAccuracyMetersPerSecond = 0F
+                        location.accuracy = accuracy
                         param.result = location
                         GlobalScope.launch(Dispatchers.IO) {
                             XposedHelpers.callMethod(ILocationListener,"onLocationChanged",location)
@@ -96,7 +100,6 @@ class XposedHook : IXposedHookLoadPackage {
                 }
 
             )
-
 
         }
 
@@ -129,6 +132,20 @@ class XposedHook : IXposedHookLoadPackage {
             }
         })
 
+        XposedHelpers.findAndHookMethod(Location::class.java,"getAccuracy", object : XC_MethodHook(){
+            override fun beforeHookedMethod(param: MethodHookParam?) {
+                super.beforeHookedMethod(param)
+                if (System.currentTimeMillis() - mLastUpdated > 200){
+                    updateLocation()
+                }
+                if (settings.isStarted){
+                    param?.result = accuracy
+                }
+
+
+            }
+        })
+
 
 
         XposedHelpers.findAndHookMethod(Location::class.java, "set",
@@ -150,7 +167,7 @@ class XposedHook : IXposedHookLoadPackage {
                             originLocation = param.args[0] as Location
                             location = Location(originLocation.provider)
                             location.time = originLocation.time
-                            location.accuracy = originLocation.accuracy
+                            location.accuracy = accuracy
                             location.bearing = originLocation.bearing
                             location.bearingAccuracyDegrees = originLocation.bearingAccuracyDegrees
                             location.elapsedRealtimeNanos = originLocation.elapsedRealtimeNanos
@@ -202,6 +219,8 @@ class XposedHook : IXposedHookLoadPackage {
             val dlng = y / (earth * cos(pi * settings.getLat / 180.0))
             newlat = if (settings.isRandomPosition) settings.getLat + (dlat * 180.0 / pi) else settings.getLat
             newlng = if (settings.isRandomPosition) settings.getLng + (dlng * 180.0 / pi) else settings.getLng
+            accuracy = settings.accuracy!!.toFloat()
+
 
         }catch (e: Exception) {
             Timber.tag("GPS Setter").e(e, "Failed to get XposedSettings for %s", context.packageName)

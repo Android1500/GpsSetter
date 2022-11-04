@@ -1,0 +1,49 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <PreferenceCategory android:title="@string/preference_category_general">
+
+        <rikka.preference.SimpleMenuPreference
+            android:title="Map"
+            android:summary="%s"            android:icon="@drawable/ic_map_type"
+            android:key="map_type"
+            android:dialogTitle="Map type"
+            android:entries="@array/map_type"
+            android:entryValues="@array/map_value"
+            android:defaultValue="1"/>
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/xposed">
+
+        <CheckBoxPreference
+            android:title="@string/advance_hook"
+            android:summary="Hook system for better Location set you must select system."
+            android:key="isHookedSystem"
+            android:icon="@drawable/ic_advance_hook"/>
+
+        <EditTextPreference
+            android:defaultValue="10"
+            android:digits="0123456789"
+            android:key="accuracy_settings"
+            android:title="@string/settings_of_accuracy"
+            android:icon="@drawable/ic_accuracy"
+            android:summary="10 m."/>
+
+        <SwitchPreference
+            android:title="Random position"
+            android:summary="Location position will be random around set location."
+            android:icon="@drawable/ic_random_position"
+            android:key="random_position"/>
+
+
+    </PreferenceCategory>
+
+
+
+
+
+
+</PreferenceScreen>

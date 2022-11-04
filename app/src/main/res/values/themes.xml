@@ -7,19 +7,11 @@
         <item name="colorAccent">@color/accent</item>/item>
         <item name="colorOnPrimary">@color/white</item>
 
-        <!-- Secondary brand color. -->
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
 
-
-        <!-- Customize your theme here. -->
     </style>
 
-
-    <style name="Theme.GPSSetter.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-    </style>
 
 
 </resources>

@@ -18,11 +18,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.R
-import com.android1500.gpssetter.utils.ext.onDefault
 import com.android1500.gpssetter.utils.ext.onIO
 import com.android1500.gpssetter.utils.ext.onMain
 import com.android1500.gpssetter.repository.FavouriteRepository
-import com.android1500.gpssetter.repository.SettingsRepository
+import com.android1500.gpssetter.utils.PrefManager
 import com.android1500.gpssetter.room.Favourite
 import com.android1500.gpssetter.selfhook.XposedSelfHooks
 import com.android1500.gpssetter.update.UpdateChecker
@@ -41,7 +40,7 @@ import kotlin.math.roundToInt
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val favouriteRepository: FavouriteRepository,
-    private val settingsRepo: SettingsRepository,
+    private val settingsRepo: PrefManager,
     private val updateChecker: UpdateChecker,
     private val downloadManager: DownloadManager,
     @ApplicationContext context: Context

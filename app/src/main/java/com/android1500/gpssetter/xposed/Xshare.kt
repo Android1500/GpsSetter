@@ -1,11 +1,11 @@
 package com.android1500.gpssetter.xposed
 import com.android1500.gpssetter.BuildConfig
-import com.android1500.gpssetter.repository.SettingsRepository
 import de.robv.android.xposed.XSharedPreferences
 
  class Xshare {
 
     private var xPref: XSharedPreferences? = null
+
     private fun pref() : XSharedPreferences {
         xPref = XSharedPreferences(BuildConfig.APPLICATION_ID,"${BuildConfig.APPLICATION_ID}_prefs")
         return xPref as XSharedPreferences
@@ -13,8 +13,10 @@ import de.robv.android.xposed.XSharedPreferences
 
 
      val isStarted : Boolean
-     get() = pref().getBoolean("start", false)
-
+     get() = pref().getBoolean(
+         "start",
+         false
+     )
 
      val getLat: Double
      get() = pref().getFloat(
@@ -40,6 +42,9 @@ import de.robv.android.xposed.XSharedPreferences
          "random_position",
          false
      )
+
+     val accuracy : String?
+     get() = pref().getString("accuracy_settings","10")
 
 
 
