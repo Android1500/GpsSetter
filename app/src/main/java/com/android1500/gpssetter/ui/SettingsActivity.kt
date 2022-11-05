@@ -156,13 +156,6 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        fun restartApplication(activity: Activity) {
-            val pm = activity.packageManager
-            val intent = pm.getLaunchIntentForPackage(activity.packageName)
-            activity.finishAffinity() // Finishes all activities.
-            activity.startActivity(intent) // Start the launch activity
-            System.exit(0) // System finishes and automatically relaunches us.
-        }
     }
 
 
