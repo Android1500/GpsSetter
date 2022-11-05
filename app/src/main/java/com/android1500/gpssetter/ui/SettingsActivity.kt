@@ -1,5 +1,7 @@
 package com.android1500.gpssetter.ui
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
@@ -16,6 +18,7 @@ import com.android1500.gpssetter.R
 import com.android1500.gpssetter.databinding.SettingsActivityBinding
 import com.android1500.gpssetter.utils.PrefManager
 import rikka.preference.SimpleMenuPreference
+
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -120,7 +123,7 @@ class SettingsActivity : AppCompatActivity() {
             }
 
             findPreference<SimpleMenuPreference>("map_type")?.setOnPreferenceChangeListener { _, _ ->
-                activity?.recreate()
+
                 true
             }
         }
@@ -151,6 +154,14 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 }
             }
+        }
+
+        fun restartApplication(activity: Activity) {
+            val pm = activity.packageManager
+            val intent = pm.getLaunchIntentForPackage(activity.packageName)
+            activity.finishAffinity() // Finishes all activities.
+            activity.startActivity(intent) // Start the launch activity
+            System.exit(0) // System finishes and automatically relaunches us.
         }
     }
 

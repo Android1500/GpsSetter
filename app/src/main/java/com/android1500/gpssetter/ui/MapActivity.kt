@@ -53,11 +53,8 @@ import kotlin.properties.Delegates
 
 @AndroidEntryPoint
 class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener {
-    private val binding by lazy {
-        ActivityMapBinding.inflate(layoutInflater)
-    }
 
-
+    private val binding by lazy { ActivityMapBinding.inflate(layoutInflater) }
     private lateinit var mMap: GoogleMap
     private val viewModel by viewModels<MainViewModel>()
     private val update by lazy { viewModel.getAvailableUpdate() }
@@ -71,9 +68,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     private var xposedDialog: AlertDialog? = null
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
-    private var addressList: List<Address>? = null
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,10 +79,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
         isModuleEnable()
         updateChecker()
     }
-
-
-
-
 
 
     private fun initializeMap() {
@@ -152,7 +142,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         with(mMap){
-            clear()
             mapType = viewModel.mapType
             val zoom = 12.0f
             lat = viewModel.getLat
@@ -164,10 +153,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)).visible(false)
                 )
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
-
             }
+            uiSettings.isZoomControlsEnabled = true
+            uiSettings.isMyLocationButtonEnabled = true
+            setPadding(0,0,0,150)
             setOnMapClickListener(this@MapActivity)
-
             if (viewModel.isStarted){
                 mMarker?.let {
                     it.isVisible = true
@@ -282,7 +272,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                                         progressBar.dismiss()
                                         showToast(result.error!!)
                                     }
-                                    else -> {  }
                                 }
                             }
                         }
@@ -439,8 +428,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
             }else {
                 try {
                     val geocoder = Geocoder(this@MapActivity)
-                    addressList = geocoder.getFromLocationName(address,5)
-                    val list: List<Address>? = addressList
+                    val list: List<Address>? = geocoder.getFromLocationName(address,5)
                     if (list == null) {
                         trySend(SearchProgress.Fail(null))
                     }
@@ -449,18 +437,18 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                         sb.append(list[0].latitude).append(",").append(list[0].longitude)
                         trySend(SearchProgress.Complete(sb.toString()))
                     } else {
-                        trySend(SearchProgress.Fail(getString(R.string.address_not_found)))
+                        if (list?.size == 0){
+                            trySend(SearchProgress.Fail(getString(R.string.address_not_found)))
+                        }
+                        trySend(SearchProgress.Fail(null))
                     }
                 } catch (io : IOException){
                     trySend(SearchProgress.Fail(getString(R.string.no_internet)))
                 }
-
             }
-
         }
 
         awaitClose { this.cancel() }
-
     }
 
 

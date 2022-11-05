@@ -55,7 +55,7 @@ object PrefManager   {
     get() = pref.getFloat(LATITUDE, 40.7128F).toDouble()
 
     val getLng : Double
-    get() = pref.getFloat(LONGITUDE, 74.006F).toDouble()
+    get() = pref.getFloat(LONGITUDE, -74.0060F).toDouble()
 
     var isHookSystem : Boolean
     get() = pref.getBoolean(HOOKED_SYSTEM, false)
