@@ -91,11 +91,6 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
 
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-
-    }
-
     private fun initializeMap() {
         lifecycleScope.launchWhenResumed {
             val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
