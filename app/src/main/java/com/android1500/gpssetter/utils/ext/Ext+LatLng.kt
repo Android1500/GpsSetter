@@ -10,7 +10,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import java.util.*
 
-suspend fun LatLng.getAddress(context: Context) = callbackFlow<String> {
+suspend fun LatLng.getAddress(context: Context) = callbackFlow {
     withContext(Dispatchers.IO){
         val addresses =
             Geocoder(context, Locale.getDefault()).getFromLocation(latitude, longitude, 1)

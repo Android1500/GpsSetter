@@ -1,7 +1,7 @@
 package com.android1500.gpssetter.ui
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.navigation.Navigation
 import by.kirich1409.viewbindingdelegate.viewBinding
@@ -22,4 +22,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         val navController = Navigation.findNavController(this, R.id.nav_host_fragment)
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
+
+
 }

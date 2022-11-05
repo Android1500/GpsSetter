@@ -8,6 +8,7 @@ import android.location.LocationManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.android1500.gpssetter.BuildConfig
+import com.android1500.gpssetter.gsApp
 import de.robv.android.xposed.*
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kotlinx.coroutines.Dispatchers
@@ -91,7 +92,7 @@ class XposedHook : IXposedHookLoadPackage {
                         location.speedAccuracyMetersPerSecond = 0F
                         location.accuracy = accuracy
                         param.result = location
-                        GlobalScope.launch(Dispatchers.IO) {
+                        gsApp.globalScope.launch(Dispatchers.IO){
                             XposedHelpers.callMethod(ILocationListener,"onLocationChanged",location)
                             XposedBridge.log("Inside --> ILocationListener")
                         }
@@ -220,7 +221,6 @@ class XposedHook : IXposedHookLoadPackage {
             newlat = if (settings.isRandomPosition) settings.getLat + (dlat * 180.0 / pi) else settings.getLat
             newlng = if (settings.isRandomPosition) settings.getLng + (dlng * 180.0 / pi) else settings.getLng
             accuracy = settings.accuracy!!.toFloat()
-
 
         }catch (e: Exception) {
             Timber.tag("GPS Setter").e(e, "Failed to get XposedSettings for %s", context.packageName)

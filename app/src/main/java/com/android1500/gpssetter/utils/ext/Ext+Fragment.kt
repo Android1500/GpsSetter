@@ -1,5 +1,6 @@
 package com.android1500.gpssetter.utils.ext
 
+import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -9,9 +10,15 @@ import androidx.annotation.MenuRes
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.navigation.ActivityNavigator
+import androidx.navigation.NavOptions
+import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.fragment.NavHostFragment
 
-val Fragment.navController get() = NavHostFragment.findNavController(this)
+val Fragment.navController
+get() = NavHostFragment.findNavController(this)
+
+
 
 fun Fragment.setupToolbar (
     toolbar: Toolbar,

@@ -2,6 +2,7 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/mapo"
     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -32,8 +33,7 @@
         android:layout_gravity="bottom|start"
         android:layout_marginStart="@dimen/padding_16"
         android:layout_marginBottom="32dp"
-        android:src="@drawable/ic_play"
-        android:contentDescription="@string/spoof_location" />
+        android:src="@drawable/ic_play" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/stop"
@@ -44,8 +44,7 @@
         android:layout_marginStart="@dimen/padding_16"
         android:layout_marginBottom="32dp"
         android:src="@drawable/ic_stop"
-        android:visibility="gone"
-        android:contentDescription="@string/spoof_location_stop" />
+        android:visibility="gone" />
 
 
 

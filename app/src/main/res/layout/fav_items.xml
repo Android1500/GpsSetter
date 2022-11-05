@@ -27,7 +27,7 @@
         android:layout_height="wrap_content"
         android:src="@drawable/ic_delete"
         android:layout_marginEnd="@dimen/padding_16"
-        android:contentDescription="@string/delete_fav"
+        android:contentDescription="@string/delete_favourite_item"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"/>
 

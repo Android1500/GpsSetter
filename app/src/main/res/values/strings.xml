@@ -10,42 +10,45 @@
     <string name="error_xposed_module_missing_desc">Enable this module in LSPosed Manager.\n\nDon’t have LSPosed?\n\t1. Install the Riru or Zygisk module from Magisk Manager\n\t2. Install the “Riru or Zygisk - LSPosed” module from Magisk Manager\n\t3. Open this app again</string>
     <string name="error_missing_root">No root access</string>
     <string name="error_missing_root_desc">Root access is necessary in order for this app to manage overlays and work properly.</string>
+
     <string name="record_saved">Save</string>
-    <string name="favorites">Favourites</string>
-    <string name="dialog_favorites_empty">empty</string>
-    <string name="record_not_saved">Not save</string>
-    <string name="empty_add">empty</string>
-    <string name="delete_fav">Delete fav</string>
+
+
     <string name="address">United States</string>
-    <string name="favourite">Favourites</string>
     <string name="add_favourite">Add favourite</string>
     <string name="Search">search</string>
     <string name="rename_favourite">Rename favourite</string>
-    <string name="spoof_location">Spoof location</string>
-    <string name="spoof_location_stop">Spoof location stop</string>
     <string name="add_fav_in_database">Add fav in database</string>
     <string name="show_fav_list">Show fav list</string>
     <string name="favourites">Favourites</string>
+    <string name="address_not_found">Address not found</string>
+
+
+    <!-- About -->
+
     <string name="about">About</string>
     <string name="about_tittle">GPS Setter</string>
     <string name="about_info">A module which will set your location where you want without enable mock location.</string>
+
+    <!-- Update -->
+
     <string name="download_manager_description">Downloading update…</string>
-    <string name="snackbar_update_button">Update</string>
-    <string name="snackbar_update">Update available</string>
+    <string name="update_button">Update</string>
+    <string name="update_available">Update available</string>
     <string name="bs_update_download_failed">Failed</string>
+
+
     <string name="cant_save">Can\'t save</string>
     <string name="location_set">Location set</string>
     <string name="title">Location set notification</string>
     <string name="des">Show notification when location will set</string>
-    <string name="location_permission_title">Location Permission Needed</string>
-    <string name="location_permission_msg">This app needs the Location permission, please accept to use location functionality</string>
+
     <string name="dialog_button_ok">OK</string>
-    <string name="update">Update</string>
-    <string name="title_fav">Favourites</string>
+
     <string name="add_fav_dialog_title">Add favourite</string>
     <string name="dialog_button_add">Add</string>
-    <string name="no_internet_connection">No internet connection</string>
     <string name="location_unset">Location unset</string>
+    <string name="no_internet">No internet</string>
     <string name="search_hint">"search eg. new york or 37.7749,-122.4194"</string>
 
     <!-- SettingActivity -->
@@ -56,20 +59,7 @@
     <string name="settings_of_accuracy">Accuracy</string>
     <string name="preference_category_general">General</string>
     <string name="enter_valid_input">Enter valid number</string>
-    <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
-
-    <!-- Messages Preferences -->
-    <string name="signature_title">Your signature</string>
-    <string name="reply_title">Default reply action</string>
-
-    <!-- Sync Preferences -->
-    <string name="sync_title">Sync email periodically</string>
-    <string name="attachment_title">Download incoming attachments</string>
-    <string name="attachment_summary_on">Automatically download attachments for incoming emails
-    </string>
-    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="delete_favourite_item">Delete favourite</string>
 
 
 </resources>

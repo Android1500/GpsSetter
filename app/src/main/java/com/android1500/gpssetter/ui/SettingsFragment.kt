@@ -25,9 +25,7 @@ import rikka.preference.SimpleMenuPreference
 class SettingsFragment : Fragment(R.layout.fragment_setting) {
 
     private val binding by viewBinding<FragmentSettingBinding>()
-     private fun onBack() {
-        navController.navigateUp()
-    }
+
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -36,7 +34,7 @@ class SettingsFragment : Fragment(R.layout.fragment_setting) {
             toolbar = binding.toolbar,
             title = getString(R.string.settings),
             navigationIcon = R.drawable.ic_back_arrow,
-            navigationOnClick = {onBack()}
+            navigationOnClick = { }
         )
 
         if (childFragmentManager.findFragmentById(R.id.settings_container) == null) {
@@ -121,7 +119,7 @@ class SettingsFragment : Fragment(R.layout.fragment_setting) {
                 }
                 true
             }
-            findPreference<SimpleMenuPreference>("map_type")?.setOnPreferenceChangeListener { _, newValue ->
+            findPreference<SimpleMenuPreference>("map_type")?.setOnPreferenceChangeListener { _, _ ->
                 activity?.recreate()
                 true
             }
