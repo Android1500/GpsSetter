@@ -60,6 +60,7 @@
     <string name="preference_category_general">General</string>
     <string name="enter_valid_input">Enter valid number</string>
     <string name="delete_favourite_item">Delete favourite</string>
+    <string name="title_activity_settings">Settings</string>
 
 
 </resources>

@@ -40,16 +40,17 @@ import kotlin.math.roundToInt
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val favouriteRepository: FavouriteRepository,
-    private val settingsRepo: PrefManager,
+    private val prefManger: PrefManager,
     private val updateChecker: UpdateChecker,
     private val downloadManager: DownloadManager,
     @ApplicationContext context: Context
 ) : ViewModel() {
 
 
-    val getLat  = settingsRepo.getLat
-    val getLng  = settingsRepo.getLng
-    val isStarted = settingsRepo.isStarted
+    val getLat  = prefManger.getLat
+    val getLng  = prefManger.getLng
+    val isStarted = prefManger.isStarted
+    val mapType = prefManger.mapType
 
 
     private val _allFavList = MutableStateFlow<List<Favourite>>(emptyList())
@@ -67,8 +68,8 @@ class MainViewModel @Inject constructor(
     }
 
 
-    fun update(start: Boolean, la: Double, ln: Double) = onIO {
-        settingsRepo.update(start,la,ln)
+    fun update(start: Boolean, la: Double, ln: Double)  {
+        prefManger.update(start,la,ln)
     }
 
     private val _response = MutableLiveData<Long>()

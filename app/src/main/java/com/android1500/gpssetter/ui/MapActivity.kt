@@ -1,31 +1,37 @@
-package com.android1500.gpssetter
+package com.android1500.gpssetter.ui
 
 import android.app.Notification
 import android.app.ProgressDialog
+import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.app.NotificationCompat
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import by.kirich1409.viewbindingdelegate.viewBinding
+import com.android1500.gpssetter.BuildConfig
+import com.android1500.gpssetter.R
 import com.android1500.gpssetter.adapter.FavListAdapter
-import com.android1500.gpssetter.databinding.FragmentMapsBinding
+import com.android1500.gpssetter.databinding.ActivityMapBinding
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.utils.PrefManager
-import com.android1500.gpssetter.utils.ext.*
+import com.android1500.gpssetter.utils.ext.getAddress
+import com.android1500.gpssetter.utils.ext.isNetworkConnected
+import com.android1500.gpssetter.utils.ext.showToast
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -45,13 +51,15 @@ import java.io.IOException
 import java.util.regex.Pattern
 import kotlin.properties.Delegates
 
-
 @AndroidEntryPoint
-class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, GoogleMap.OnMapClickListener {
+class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener {
+    private val binding by lazy {
+        ActivityMapBinding.inflate(layoutInflater)
+    }
+
 
     private lateinit var mMap: GoogleMap
     private val viewModel by viewModels<MainViewModel>()
-    private val binding : FragmentMapsBinding by viewBinding()
     private val update by lazy { viewModel.getAvailableUpdate() }
     private val notificationsChannel by lazy { NotificationsChannel() }
 
@@ -65,46 +73,35 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
     private lateinit var dialog: AlertDialog
     private var addressList: List<Address>? = null
 
-    private fun onMenuOptionSelected(item: MenuItem) {
-        when(item.itemId){
-            R.id.about -> aboutDialog()
-            R.id.add_fav -> addFavouriteDialog()
-            R.id.get_favourite -> openFavouriteListDialog()
-            R.id.search -> searchDialog()
-            R.id.settings -> navController.navigate(R.id.action_mapsFragment_to_settingsFragment)
-        }
-    }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupToolbar (
-            toolbar = binding.toolbar,
-            title = getString(R.string.app_name),
-            menuRes = R.menu.main_menu,
-            onMenuOptionSelected = this::onMenuOptionSelected
-        )
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbar)
         initializeMap()
         setFloatActionButton()
         isModuleEnable()
         updateChecker()
-
     }
 
-    private fun initializeMap() {
-        lifecycleScope.launchWhenResumed {
-            val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
-            mapFragment?.getMapAsync(this@MapsFragment)
-        }
 
+
+
+
+
+    private fun initializeMap() {
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
+        mapFragment?.getMapAsync(this)
     }
 
     private fun isModuleEnable(){
-        viewModel.isXposed.observe(requireActivity()){ isXposed ->
+        viewModel.isXposed.observe(this){ isXposed ->
             xposedDialog?.dismiss()
             xposedDialog = null
             if (!isXposed){
-                xposedDialog = MaterialAlertDialogBuilder(requireContext()).run {
+                xposedDialog = MaterialAlertDialogBuilder(this).run {
                     setTitle(R.string.error_xposed_module_missing)
                     setMessage(R.string.error_xposed_module_missing_desc)
                     setCancelable(BuildConfig.DEBUG)
@@ -114,6 +111,7 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
         }
 
     }
+
 
     private fun setFloatActionButton() {
         if (viewModel.isStarted) {
@@ -128,15 +126,15 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
             }
             mMarker?.isVisible = true
             binding.start.visibility = View.GONE
-            binding.stop.visibility =View.VISIBLE
+            binding.stop.visibility = View.VISIBLE
             lifecycleScope.launch {
-                mLatLng?.getAddress(requireContext())?.let { address ->
+                mLatLng?.getAddress(this@MapActivity)?.let { address ->
                     address.collect{ value ->
                         showStartNotification(value)
                     }
                 }
             }
-            requireContext().showToast(getString(R.string.location_set))
+           showToast(getString(R.string.location_set))
         }
         binding.stop.setOnClickListener {
             mLatLng.let {
@@ -146,8 +144,7 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
             binding.stop.visibility = View.GONE
             binding.start.visibility = View.VISIBLE
             cancelNotification()
-            requireContext().showToast(getString(R.string.location_unset))
-
+            showToast(getString(R.string.location_unset))
         }
     }
 
@@ -155,7 +152,8 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         with(mMap){
-            mapType = PrefManager.mapType
+            clear()
+            mapType = viewModel.mapType
             val zoom = 12.0f
             lat = viewModel.getLat
             lon  = viewModel.getLng
@@ -168,7 +166,7 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
 
             }
-            setOnMapClickListener(this@MapsFragment)
+            setOnMapClickListener(this@MapActivity)
 
             if (viewModel.isStarted){
                 mMarker?.let {
@@ -216,7 +214,7 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
 
 
     private fun aboutDialog(){
-        alertDialog = MaterialAlertDialogBuilder(requireContext())
+        alertDialog = MaterialAlertDialogBuilder(this)
         layoutInflater.inflate(R.layout.about,null).apply {
             val  tittle = findViewById<TextView>(R.id.design_about_title)
             val  version = findViewById<TextView>(R.id.design_about_version)
@@ -230,19 +228,39 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
         }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu,menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+       when(item.itemId){
+            R.id.search -> searchDialog()
+            R.id.add_fav -> addFavouriteDialog()
+            R.id.get_favourite -> openFavouriteListDialog()
+            R.id.settings -> startActivity(Intent(this,SettingsActivity::class.java))
+            R.id.about -> aboutDialog()
+
+            else -> super.onOptionsItemSelected(item)
+        }
+        return true
+
+    }
+
+
 
 
     private fun searchDialog() {
-        alertDialog = MaterialAlertDialogBuilder(requireContext())
+        alertDialog = MaterialAlertDialogBuilder(this)
         val view = layoutInflater.inflate(R.layout.dialog_layout,null)
         val editText = view.findViewById<EditText>(R.id.search_edittxt)
         editText.hint = getString(R.string.search_hint)
-        val progressBar = ProgressDialog(requireContext())
+        val progressBar = ProgressDialog(this)
         progressBar.setMessage("Searching...")
         alertDialog.setTitle("Search")
         alertDialog.setView(view)
         alertDialog.setPositiveButton("Search") { _, _ ->
-            if (requireContext().isNetworkConnected()){
+            if (isNetworkConnected()){
                 lifecycleScope.launch(Dispatchers.Main) {
                     val  getInput = editText.text.toString()
                     if (getInput.isNotEmpty()){
@@ -262,7 +280,7 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
                                     }
                                     is SearchProgress.Fail -> {
                                         progressBar.dismiss()
-                                        requireContext().showToast(result.error!!)
+                                        showToast(result.error!!)
                                     }
                                     else -> {  }
                                 }
@@ -271,7 +289,7 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
                     }
                 }
             } else {
-                requireContext().showToast(getString(R.string.no_internet))
+                showToast(getString(R.string.no_internet))
             }
         }
         alertDialog.show()
@@ -280,18 +298,18 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
 
     private fun addFavouriteDialog(){
 
-        alertDialog =  MaterialAlertDialogBuilder(requireContext()).apply {
+        alertDialog =  MaterialAlertDialogBuilder(this).apply {
             val view = layoutInflater.inflate(R.layout.dialog_layout,null)
             val editText = view.findViewById<EditText>(R.id.search_edittxt)
             setTitle(getString(R.string.add_fav_dialog_title))
             setPositiveButton(getString(R.string.dialog_button_add)) { _, _ ->
                 val s = editText.text.toString()
                 if (!mMarker?.isVisible!!){
-                    requireContext().showToast("Not location select")
+                  showToast("Not location select")
                 }else{
                     viewModel.storeFavorite(s, lat, lon)
-                    viewModel.response.observe(requireActivity()){
-                        if (it == (-1).toLong()) requireContext().showToast("Can't save") else requireContext().showToast("Save")
+                    viewModel.response.observe(this@MapActivity){
+                        if (it == (-1).toLong()) showToast("Can't save") else showToast("Save")
                     }
                 }
             }
@@ -304,11 +322,11 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
 
     private fun openFavouriteListDialog() {
         getAllUpdatedFavList()
-        alertDialog = MaterialAlertDialogBuilder(requireContext())
+        alertDialog = MaterialAlertDialogBuilder(this)
         alertDialog.setTitle(getString(R.string.favourites))
         val view = layoutInflater.inflate(R.layout.fav,null)
         val  rcv = view.findViewById<RecyclerView>(R.id.favorites_list)
-        rcv.layoutManager = LinearLayoutManager(requireContext())
+        rcv.layoutManager = LinearLayoutManager(this)
         rcv.adapter = favListAdapter
         favListAdapter.onItemClick = {
             it.let {
@@ -345,17 +363,17 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
 
 
     private fun updateDialog(){
-        alertDialog = MaterialAlertDialogBuilder(requireContext())
+        alertDialog = MaterialAlertDialogBuilder(this)
         alertDialog.setTitle(R.string.update_available)
         alertDialog.setMessage(update?.changelog)
         alertDialog.setPositiveButton(getString(R.string.update_button)) { _, _ ->
-            MaterialAlertDialogBuilder(requireContext()).apply {
+            MaterialAlertDialogBuilder(this).apply {
                 val view = layoutInflater.inflate(R.layout.update_dialog, null)
                 val progress = view.findViewById<LinearProgressIndicator>(R.id.update_download_progress)
                 val cancel = view.findViewById<AppCompatButton>(R.id.update_download_cancel)
                 setView(view)
                 cancel.setOnClickListener {
-                    viewModel.cancelDownload(requireContext())
+                    viewModel.cancelDownload(this@MapActivity)
                     dialog.dismiss()
                 }
                 lifecycleScope.launch {
@@ -368,14 +386,14 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
                                 }
                             }
                             is MainViewModel.State.Done -> {
-                                viewModel.openPackageInstaller(requireContext(), it.fileUri)
+                                viewModel.openPackageInstaller(this@MapActivity, it.fileUri)
                                 viewModel.clearUpdate()
                                 dialog.dismiss()
                             }
 
                             is MainViewModel.State.Failed -> {
                                 Toast.makeText(
-                                    requireContext(),
+                                    this@MapActivity,
                                     R.string.bs_update_download_failed,
                                     Toast.LENGTH_LONG
                                 ).show()
@@ -387,7 +405,7 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
                     }
                 }
                 update?.let { it ->
-                    viewModel.startDownload(requireContext(), it)
+                    viewModel.startDownload(this@MapActivity, it)
                 } ?: run {
                     dialog.dismiss()
                 }
@@ -412,11 +430,6 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
     }
 
 
-
-
-
-
-
     private suspend fun getSearchAddress(address: String) = callbackFlow {
         withContext(Dispatchers.IO){
             trySend(SearchProgress.Progress)
@@ -425,7 +438,7 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
                 trySend(SearchProgress.Complete(address))
             }else {
                 try {
-                    val geocoder = Geocoder(requireContext())
+                    val geocoder = Geocoder(this@MapActivity)
                     addressList = geocoder.getFromLocationName(address,5)
                     val list: List<Address>? = addressList
                     if (list == null) {
@@ -433,15 +446,12 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
                     }
                     if (list?.size == 1){
                         val sb = StringBuilder()
-                        sb.append(list[0].latitude)
-                        sb.append(",")
-                        sb.append(list[0].longitude)
+                        sb.append(list[0].latitude).append(",").append(list[0].longitude)
                         trySend(SearchProgress.Complete(sb.toString()))
                     } else {
                         trySend(SearchProgress.Fail(getString(R.string.address_not_found)))
                     }
                 } catch (io : IOException){
-                    io.printStackTrace()
                     trySend(SearchProgress.Fail(getString(R.string.no_internet)))
                 }
 
@@ -463,7 +473,7 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
 
 
     private fun showStartNotification(address: String){
-        notificationsChannel.showNotification(requireContext()){
+        notificationsChannel.showNotification(this){
             it.setSmallIcon(R.drawable.ic_stop)
             it.setContentTitle(getString(R.string.location_set))
             it.setContentText(address)
@@ -476,13 +486,10 @@ class MapsFragment : Fragment(R.layout.fragment_maps), OnMapReadyCallback, Googl
 
 
     private fun cancelNotification(){
-        notificationsChannel.cancelAllNotifications(requireContext())
+        notificationsChannel.cancelAllNotifications(this)
     }
-
-
-
-
 }
+
 
 sealed class SearchProgress {
     object Progress : SearchProgress()
