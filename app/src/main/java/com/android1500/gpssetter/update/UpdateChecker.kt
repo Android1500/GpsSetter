@@ -3,6 +3,7 @@ package com.android1500.gpssetter.update
 import android.content.Context
 import android.os.Parcelable
 import com.android1500.gpssetter.BuildConfig
+import com.android1500.gpssetter.utils.PrefManager
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -20,7 +21,7 @@ class UpdateChecker @Inject constructor(private val apiResponse : GitHubService)
             getReleaseList()?.let { gitHubReleaseResponse ->
                 val currentTag = gitHubReleaseResponse.tagName
 
-                if (currentTag != null && currentTag != BuildConfig.TAG_NAME) {
+                if (currentTag != null && (currentTag != BuildConfig.TAG_NAME && PrefManager.disableUpdate)) {
                     //New update available!
                     val asset =
                         gitHubReleaseResponse.assets?.firstOrNull { it.name?.endsWith(".apk") == true }

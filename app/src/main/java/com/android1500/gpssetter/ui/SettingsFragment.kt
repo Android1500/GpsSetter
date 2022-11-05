@@ -50,6 +50,7 @@ class SettingsFragment : Fragment(R.layout.fragment_setting) {
             return when(key) {
                 "isHookedSystem" -> PrefManager.isHookSystem
                 "random_position" -> PrefManager.isRandomPosition
+                "disable_update" -> PrefManager.disableUpdate
                 else -> throw IllegalArgumentException("Invalid key $key")
             }
         }
@@ -58,6 +59,7 @@ class SettingsFragment : Fragment(R.layout.fragment_setting) {
             return when(key) {
                 "isHookedSystem" -> PrefManager.isHookSystem = value
                 "random_position" -> PrefManager.isRandomPosition = value
+                "disable_update" -> PrefManager.disableUpdate = value
                 else -> throw IllegalArgumentException("Invalid key $key")
             }
         }

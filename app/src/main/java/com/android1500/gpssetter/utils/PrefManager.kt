@@ -27,6 +27,7 @@ object PrefManager   {
     private const val ACCURACY_SETTING = "accuracy_settings"
     private const val MAP_TYPE = "map_type"
     private const val DARK_THEME = "dark_theme"
+    private const val DISABLE_UPDATE = "disable_update"
 
 
     private val pref: SharedPreferences by lazy {
@@ -75,6 +76,10 @@ object PrefManager   {
     var darkTheme: Int
         get() = pref.getInt(DARK_THEME, DayNightDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         set(value) = pref.edit().putInt(DARK_THEME, value).apply()
+
+    var disableUpdate: Boolean
+        get() = pref.getBoolean(DISABLE_UPDATE, false)
+        set(value) = pref.edit().putBoolean(DISABLE_UPDATE, value).apply()
 
 
     fun update(start:Boolean, la: Double, ln: Double) {
