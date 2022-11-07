@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.ProgressDialog
-import android.content.ContextWrapper
 import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
@@ -16,13 +15,11 @@ import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -34,7 +31,6 @@ import com.android1500.gpssetter.R
 import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapBinding
 import com.android1500.gpssetter.utils.NotificationsChannel
-import com.android1500.gpssetter.utils.PrefManager
 import com.android1500.gpssetter.utils.ext.*
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -172,7 +168,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                     99
                 )
             }
-            setPadding(0,0,0,150)
+            setPadding(0,0,0,170)
             setOnMapClickListener(this@MapActivity)
             if (viewModel.isStarted){
                 mMarker?.let {
@@ -308,7 +304,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
             setPositiveButton(getString(R.string.dialog_button_add)) { _, _ ->
                 val s = editText.text.toString()
                 if (!mMarker?.isVisible!!){
-                  showToast("Not location select")
+                  showToast("Location not select")
                 }else{
                     viewModel.storeFavorite(s, lat, lon)
                     viewModel.response.observe(this@MapActivity){
@@ -472,6 +468,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     }
 
 
+
+
     private fun showStartNotification(address: String){
         notificationsChannel.showNotification(this){
             it.setSmallIcon(R.drawable.ic_stop)
@@ -490,8 +488,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     }
 
 
-
-
 }
 
 
@@ -499,5 +495,4 @@ sealed class SearchProgress {
     object Progress : SearchProgress()
     data class Complete(val address: String) : SearchProgress()
     data class Fail(val error: String?) : SearchProgress()
-
 }

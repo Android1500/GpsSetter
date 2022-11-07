@@ -3,6 +3,8 @@ package com.android1500.gpssetter
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import com.android1500.gpssetter.utils.PrefManager
+import com.startapp.sdk.adsbase.StartAppAd
+import com.startapp.sdk.adsbase.StartAppSDK
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +31,12 @@ class App : Application() {
         gsApp = this
         commonInit()
         AppCompatDelegate.setDefaultNightMode(PrefManager.darkTheme)
+        StartAppAd.disableSplash()
+        StartAppSDK.enableReturnAds(true)
+        StartAppSDK.getExtras(this)
+            .edit()
+            .putString("IABUSPrivacy_String", "1YNN")
+            .apply();
 
     }
 
