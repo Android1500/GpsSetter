@@ -7,7 +7,6 @@ import android.app.ProgressDialog
 import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -17,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -67,6 +67,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     private var xposedDialog: AlertDialog? = null
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -435,20 +436,16 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                 trySend(SearchProgress.Complete(address))
             }else {
                 try {
-                    val geocoder = Geocoder(this@MapActivity)
-                    val list: List<Address>? = geocoder.getFromLocationName(address,5)
-                    if (list == null) {
-                        trySend(SearchProgress.Fail(null))
-                    }
-                    if (list?.size == 1){
-                        val sb = StringBuilder()
-                        sb.append(list[0].latitude).append(",").append(list[0].longitude)
-                        trySend(SearchProgress.Complete(sb.toString()))
-                    } else {
-                        if (list?.size == 0){
+
+                    val list: List<Address>? = Geocoder(this@MapActivity).getFromLocationName(address,5)
+                    list?.let {
+                        if (it.size == 1){
+                            val sb = StringBuilder()
+                            sb.append(list[0].latitude).append(",").append(list[0].longitude)
+                            trySend(SearchProgress.Complete(sb.toString()))
+                        }else {
                             trySend(SearchProgress.Fail(getString(R.string.address_not_found)))
                         }
-                        trySend(SearchProgress.Fail(null))
                     }
                 } catch (io : IOException){
                     trySend(SearchProgress.Fail(getString(R.string.no_internet)))
