@@ -111,7 +111,7 @@ class XposedHook : IXposedHookLoadPackage {
                 if (System.currentTimeMillis() - mLastUpdated > 200){
                     updateLocation()
                 }
-                if (settings.isStarted){
+                if (settings.isStarted && !lpparam?.packageName.equals(BuildConfig.APPLICATION_ID)){
                     param?.result = newlat
 
                 }
@@ -125,7 +125,7 @@ class XposedHook : IXposedHookLoadPackage {
                 if (System.currentTimeMillis() - mLastUpdated > 200){
                     updateLocation()
                 }
-                if (settings.isStarted){
+                if (settings.isStarted && !lpparam?.packageName.equals(BuildConfig.APPLICATION_ID)){
                     param?.result = newlng
                 }
 
@@ -139,7 +139,7 @@ class XposedHook : IXposedHookLoadPackage {
                 if (System.currentTimeMillis() - mLastUpdated > 200){
                     updateLocation()
                 }
-                if (settings.isStarted){
+                if (settings.isStarted && !lpparam?.packageName.equals(BuildConfig.APPLICATION_ID)){
                     param?.result = accuracy
                 }
 
@@ -157,7 +157,7 @@ class XposedHook : IXposedHookLoadPackage {
                     if (System.currentTimeMillis() - mLastUpdated > 200){
                         updateLocation()
                     }
-                    if (settings.isStarted){
+                    if (settings.isStarted && !lpparam?.packageName.equals(BuildConfig.APPLICATION_ID)){
                         lateinit var location: Location
                         lateinit var originLocation: Location
 
