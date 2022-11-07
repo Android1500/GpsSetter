@@ -89,7 +89,7 @@ dependencies {
         exclude group: "androidx.lifecycle", module: "lifecycle-viewmodel-ktx"
     }
 
-    implementation 'com.startapp:inapp-sdk:4.10.0'
+    implementation 'com.startapp:inapp-sdk:4.10.5'
 
 
 
