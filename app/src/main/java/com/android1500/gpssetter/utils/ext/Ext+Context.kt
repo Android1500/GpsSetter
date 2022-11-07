@@ -1,11 +1,17 @@
 package com.android1500.gpssetter.utils.ext
 
+
+import android.Manifest
+import android.annotation.TargetApi
+import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat.requestPermissions
+import androidx.core.content.ContextCompat
+import com.android1500.gpssetter.ui.MapActivity
 
 fun Context.showToast(msg : String){
     Toast.makeText(this,msg, Toast.LENGTH_LONG).show()
@@ -24,5 +30,11 @@ fun Context.isNetworkConnected(): Boolean {
         NetworkCapabilities.TRANSPORT_WIFI_AWARE
     )
     return capabilities.any { networkCapabilities?.hasTransport(it) ?: false }
+}
+
+
+
+private fun Context.checkSinglePermission(permission: String) : Boolean {
+    return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 }
 

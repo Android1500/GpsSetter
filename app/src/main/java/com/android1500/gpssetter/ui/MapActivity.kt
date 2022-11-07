@@ -1,7 +1,10 @@
 package com.android1500.gpssetter.ui
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.ProgressDialog
+import android.content.ContextWrapper
 import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
@@ -13,10 +16,13 @@ import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -29,9 +35,7 @@ import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapBinding
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.utils.PrefManager
-import com.android1500.gpssetter.utils.ext.getAddress
-import com.android1500.gpssetter.utils.ext.isNetworkConnected
-import com.android1500.gpssetter.utils.ext.showToast
+import com.android1500.gpssetter.utils.ext.*
 import com.android1500.gpssetter.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -77,7 +81,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
         setFloatActionButton()
         isModuleEnable()
         updateChecker()
+
     }
+
+
 
 
     private fun initializeMap() {
@@ -138,6 +145,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     }
 
 
+    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         with(mMap){
@@ -154,7 +162,17 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
             }
             uiSettings.isZoomControlsEnabled = true
-            uiSettings.isMyLocationButtonEnabled = true
+            if (ContextCompat.checkSelfPermission(this@MapActivity, "android.permission.ACCESS_FINE_LOCATION") == 0) {
+                mMap.isMyLocationEnabled = true;
+            }else {
+                val permList = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION)
+                ActivityCompat.requestPermissions(
+                    this@MapActivity,
+                    permList,
+                    99
+                )
+            }
             setPadding(0,0,0,150)
             setOnMapClickListener(this@MapActivity)
             if (viewModel.isStarted){
@@ -471,6 +489,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     private fun cancelNotification(){
         notificationsChannel.cancelAllNotifications(this)
     }
+
+
+
+
 }
 
 
