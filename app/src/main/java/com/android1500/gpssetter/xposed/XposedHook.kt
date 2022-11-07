@@ -43,7 +43,7 @@ class XposedHook : IXposedHookLoadPackage {
              setupSelfHooks(lpparam.classLoader)
         }
 
-        if (settings.isHookedSystem && lpparam?.packageName.equals("android")){
+        if (settings.isHookedSystem && (lpparam?.packageName.equals("android") && !lpparam?.packageName.equals(BuildConfig.APPLICATION_ID))){
 
             XposedBridge.log("Inside --> System")
 

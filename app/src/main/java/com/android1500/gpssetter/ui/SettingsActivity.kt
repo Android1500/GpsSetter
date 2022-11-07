@@ -1,14 +1,16 @@
 package com.android1500.gpssetter.ui
 
-import android.app.Activity
+
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.text.method.DigitsKeyListener
+import android.view.MenuItem
 import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.EditTextPreference
@@ -16,13 +18,14 @@ import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.databinding.SettingsActivityBinding
+import com.android1500.gpssetter.gsApp
 import com.android1500.gpssetter.utils.PrefManager
 import rikka.preference.SimpleMenuPreference
 
 
 class SettingsActivity : AppCompatActivity() {
 
-    val binding by lazy {
+    private val binding by lazy {
         SettingsActivityBinding.inflate(layoutInflater)
     }
 
@@ -62,8 +65,6 @@ class SettingsActivity : AppCompatActivity() {
                 else -> throw IllegalArgumentException("Invalid key $key")
             }
         }
-
-
     }
 
 
@@ -79,6 +80,22 @@ class SettingsActivity : AppCompatActivity() {
         }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    finish()
+                }
+            }
+        )
+
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            onBackPressedDispatcher.onBackPressed()
+        }
+        return super.onOptionsItemSelected(item)
     }
 
 
@@ -107,7 +124,6 @@ class SettingsActivity : AppCompatActivity() {
                             getString(R.string.enter_valid_input),
                             Toast.LENGTH_SHORT
                         ).show()
-                        false
                     }
                     true
                 }
@@ -122,10 +138,8 @@ class SettingsActivity : AppCompatActivity() {
                 true
             }
 
-            findPreference<SimpleMenuPreference>("map_type")?.setOnPreferenceChangeListener { _, _ ->
 
-                true
-            }
+
         }
 
         private fun getCommaReplacerTextWatcher(editText: EditText): TextWatcher {

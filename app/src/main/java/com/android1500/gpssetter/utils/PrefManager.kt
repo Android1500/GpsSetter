@@ -82,6 +82,7 @@ object PrefManager   {
         set(value) = pref.edit().putBoolean(DISABLE_UPDATE, value).apply()
 
 
+
     fun update(start:Boolean, la: Double, ln: Double) {
         runInBackground {
             val prefEditor = pref.edit()

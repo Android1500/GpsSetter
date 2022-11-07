@@ -59,7 +59,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     private val viewModel by viewModels<MainViewModel>()
     private val update by lazy { viewModel.getAvailableUpdate() }
     private val notificationsChannel by lazy { NotificationsChannel() }
-
     private var favListAdapter: FavListAdapter = FavListAdapter()
     private var mMarker: Marker? = null
     private var mLatLng: LatLng? = null
@@ -238,8 +237,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     }
 
 
-
-
     private fun searchDialog() {
         alertDialog = MaterialAlertDialogBuilder(this)
         val view = layoutInflater.inflate(R.layout.dialog_layout,null)
@@ -347,8 +344,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
         }
 
     }
-
-
 
 
     private fun updateDialog(){
