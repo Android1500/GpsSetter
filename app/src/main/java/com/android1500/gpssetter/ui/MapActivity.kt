@@ -162,11 +162,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
             }
             uiSettings.isZoomControlsEnabled = true
-            if (ContextCompat.checkSelfPermission(this@MapActivity, "android.permission.ACCESS_FINE_LOCATION") == 0) {
+            if (checkSinglePermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
                 mMap.isMyLocationEnabled = true;
             }else {
-                val permList = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION)
+                val permList = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
                 ActivityCompat.requestPermissions(
                     this@MapActivity,
                     permList,
