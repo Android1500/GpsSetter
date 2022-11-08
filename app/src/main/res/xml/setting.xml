@@ -33,6 +33,7 @@
 
     </PreferenceCategory>
 
+
     <PreferenceCategory app:title="@string/xposed">
 
         <CheckBoxPreference

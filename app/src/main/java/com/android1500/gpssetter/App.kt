@@ -31,12 +31,6 @@ class App : Application() {
         gsApp = this
         commonInit()
         AppCompatDelegate.setDefaultNightMode(PrefManager.darkTheme)
-        StartAppAd.disableSplash()
-        StartAppSDK.enableReturnAds(true)
-        StartAppSDK.getExtras(this)
-            .edit()
-            .putString("IABUSPrivacy_String", "1YNN")
-            .apply();
 
     }
 

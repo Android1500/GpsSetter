@@ -1,7 +1,6 @@
 package com.android1500.gpssetter.ui
 
 
-import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
@@ -18,7 +17,6 @@ import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.databinding.SettingsActivityBinding
-import com.android1500.gpssetter.gsApp
 import com.android1500.gpssetter.utils.PrefManager
 import rikka.preference.SimpleMenuPreference
 
