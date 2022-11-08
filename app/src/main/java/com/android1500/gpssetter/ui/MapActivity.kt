@@ -8,7 +8,6 @@ import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -437,12 +436,13 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                 delay(3000)
                 trySend(SearchProgress.Complete(matcher.group().split(",")[0].toDouble(),matcher.group().split(",")[1].toDouble()))
             }else {
-                try {
+                val geocoder = Geocoder(this@MapActivity)
+                val addressList: List<Address>? = geocoder.getFromLocationName(address,3)
 
-                    val list: List<Address>? = Geocoder(this@MapActivity).getFromLocationName(address,5)
-                    list?.let {
+                try {
+                    addressList?.let {
                         if (it.size == 1){
-                            trySend(SearchProgress.Complete(list[0].latitude,list[1].longitude))
+                           trySend(SearchProgress.Complete(addressList[0].latitude, addressList[0].longitude))
                         }else {
                             trySend(SearchProgress.Fail(getString(R.string.address_not_found)))
                         }

@@ -3,12 +3,9 @@ package com.android1500.gpssetter
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import com.android1500.gpssetter.utils.PrefManager
-import com.startapp.sdk.adsbase.StartAppAd
-import com.startapp.sdk.adsbase.StartAppSDK
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import rikka.material.app.DayNightDelegate
 import timber.log.Timber
 
 lateinit var gsApp: App
