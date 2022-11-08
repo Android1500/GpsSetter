@@ -1,0 +1,66 @@
+<resources>
+    <string name="app_name">Régulateur GPS</string>
+    <string name="title_activity_maps">ActivitéMaps</string>
+    <string name="xposed_desc">Définir localisation</string>
+    <string name="search">Rechercher</string>
+
+
+    <!-- Errors -->
+    <string name="error_xposed_module_missing">Le module n\’est pas activé</string>
+    <string name="error_xposed_module_missing_desc">Activer ce module dans LSPosed Manager.\n\nVous n\’avez pas LSPosed?\n\t1. Installer le module Riru ou Zygisk depuis from Magisk Manager\n\t2. Installer le module “Riru ou Zygisk - LSPosed” depuis Magisk Manager\n\t3. Ouvrir à nouveau cette application</string>
+    <string name="error_missing_root">Pas d\’accès raçine</string>
+    <string name="error_missing_root_desc">L\’accès raçine est nécessaire pour que cette application puisse gérrer les surcouches et fonctionner correctement.</string>
+
+    <string name="record_saved">Enregistrer</string>
+
+
+    <string name="address">Etats Unis</string>
+    <string name="add_favourite">Ajouter le favoris</string>
+    <string name="Search">rechercher</string>
+    <string name="rename_favourite">Renommer favoris</string>
+    <string name="add_fav_in_database">Ajouter favoris à la base de données</string>
+    <string name="show_fav_list">Afficher la liste des favoris</string>
+    <string name="favourites">Favoris</string>
+    <string name="address_not_found">Addresse introuvable</string>
+
+
+    <!-- About -->
+
+    <string name="about">A propos</string>
+    <string name="about_tittle">Régulateur GPS</string>
+    <string name="about_info">Un module qui définira votre localisation où que vous le vouliez sans activer la localisation.</string>
+
+    <!-- Update -->
+
+    <string name="download_manager_description">Téléchargement de la mise à jour…</string>
+    <string name="update_button">Mise à jour</string>
+    <string name="update_available">Mise à jour disponible</string>
+    <string name="bs_update_download_failed">Échec</string>
+
+
+    <string name="cant_save">Enregistrement impossible</string>
+    <string name="location_set">Définir localisation</string>
+    <string name="title">Notification de l\’emplacement définie</string>
+    <string name="des">Afficher une notification lorsce que la localisation sera définie</string>
+
+    <string name="dialog_button_ok">OK</string>
+
+    <string name="add_fav_dialog_title">Ajouter favoris</string>
+    <string name="dialog_button_add">Ajouter</string>
+    <string name="location_unset">Localisation non définie</string>
+    <string name="no_internet">Pas d\’internet</string>
+    <string name="search_hint">"rechercher par exemple new york ou 37.7749,-122.4194"</string>
+
+    <!-- SettingActivity -->
+
+    <string name="xposed">Xposed</string>
+    <string name="advance_hook">Hammeçonner la localisation du système</string>
+    <string name="settings">Réglages</string>
+    <string name="settings_of_accuracy">Précision</string>
+    <string name="preference_category_general">Général</string>
+    <string name="enter_valid_input">Entrer un numéro valide</string>
+    <string name="delete_favourite_item">Supprimer favoris</string>
+    <string name="title_activity_settings">Réglges</string>
+
+
+</resources>
