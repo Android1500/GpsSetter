@@ -229,9 +229,4 @@ class XposedHook : IXposedHookLoadPackage {
     }
 
 
-
-
-
-
-
 }

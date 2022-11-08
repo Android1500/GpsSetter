@@ -48,6 +48,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import java.io.IOException
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.properties.Delegates
 
@@ -80,8 +81,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
         updateChecker()
 
     }
-
-
 
 
     private fun initializeMap() {
@@ -272,13 +271,12 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                                         progressBar.show()
                                     }
                                     is SearchProgress.Complete -> {
-                                        val address = result.address
-                                        val split = address.split(",")
-                                        lat = split[0].toDouble()
-                                        lon = split[1].toDouble()
+                                        lat = result.lat
+                                        lon = result.lon
                                         progressBar.dismiss()
                                         moveMapToNewLocation(true)
                                     }
+
                                     is SearchProgress.Fail -> {
                                         progressBar.dismiss()
                                         showToast(result.error!!)
@@ -431,18 +429,19 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     private suspend fun getSearchAddress(address: String) = callbackFlow {
         withContext(Dispatchers.IO){
             trySend(SearchProgress.Progress)
-            if (isRegexMatch(address)){
+            val matcher: Matcher =
+                Pattern.compile("[-+]?\\d{1,3}([.]\\d+)?, *[-+]?\\d{1,3}([.]\\d+)?").matcher(address)
+
+            if (matcher.matches()){
                 delay(3000)
-                trySend(SearchProgress.Complete(address))
+                trySend(SearchProgress.Complete(matcher.group().split(",")[0].toDouble(),matcher.group().split(",")[1].toDouble()))
             }else {
                 try {
 
                     val list: List<Address>? = Geocoder(this@MapActivity).getFromLocationName(address,5)
                     list?.let {
                         if (it.size == 1){
-                            val sb = StringBuilder()
-                            sb.append(list[0].latitude).append(",").append(list[0].longitude)
-                            trySend(SearchProgress.Complete(sb.toString()))
+                            trySend(SearchProgress.Complete(list[0].latitude,list[1].longitude))
                         }else {
                             trySend(SearchProgress.Fail(getString(R.string.address_not_found)))
                         }
@@ -454,14 +453,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
         }
 
         awaitClose { this.cancel() }
-    }
-
-
-    private fun isRegexMatch(input: String?): Boolean {
-        return Pattern.matches(
-            "[-+]?\\d{1,3}([.]\\d+)?, *[-+]?\\d{1,3}([.]\\d+)?",
-            input!!
-        )
     }
 
 
@@ -490,6 +481,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
 
 sealed class SearchProgress {
     object Progress : SearchProgress()
-    data class Complete(val address: String) : SearchProgress()
+    data class Complete(val lat: Double , val lon : Double) : SearchProgress()
     data class Fail(val error: String?) : SearchProgress()
 }
