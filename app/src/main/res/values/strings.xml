@@ -1,8 +1,25 @@
 <resources>
+
+    <!-- Home -->
+
     <string name="app_name">GPS Setter</string>
     <string name="title_activity_maps">MapsActivity</string>
     <string name="xposed_desc">Set location</string>
     <string name="search">Search</string>
+    <string name="address">United States</string>
+    <string name="add_favourite">Add favourite</string>
+    <string name="add_fav_in_database">Add fav in database</string>
+    <string name="show_fav_list">Show fav list</string>
+    <string name="favourites">Favourites</string>
+    <string name="address_not_found">Address not found</string>
+    <string name="cant_save">Can\'t save</string>
+    <string name="location_set">Location set</string>
+    <string name="title">Location set notification</string>
+    <string name="des">Show notification when location will set</string>
+    <string name="location_unset">Location unset</string>
+    <string name="no_internet">No internet</string>
+    <string name="search_hint">"search eg. new york or 37.7749,-122.4194"</string>
+
 
 
     <!-- Errors -->
@@ -11,17 +28,8 @@
     <string name="error_missing_root">No root access</string>
     <string name="error_missing_root_desc">Root access is necessary in order for this app to manage overlays and work properly.</string>
 
-    <string name="record_saved">Save</string>
 
 
-    <string name="address">United States</string>
-    <string name="add_favourite">Add favourite</string>
-    <string name="Search">search</string>
-    <string name="rename_favourite">Rename favourite</string>
-    <string name="add_fav_in_database">Add fav in database</string>
-    <string name="show_fav_list">Show fav list</string>
-    <string name="favourites">Favourites</string>
-    <string name="address_not_found">Address not found</string>
 
 
     <!-- About -->
@@ -38,18 +46,16 @@
     <string name="bs_update_download_failed">Failed</string>
 
 
-    <string name="cant_save">Can\'t save</string>
-    <string name="location_set">Location set</string>
-    <string name="title">Location set notification</string>
-    <string name="des">Show notification when location will set</string>
-
-    <string name="dialog_button_ok">OK</string>
+    <!-- Dialog -->
 
     <string name="add_fav_dialog_title">Add favourite</string>
     <string name="dialog_button_add">Add</string>
-    <string name="location_unset">Location unset</string>
-    <string name="no_internet">No internet</string>
-    <string name="search_hint">"search eg. new york or 37.7749,-122.4194"</string>
+    <string name="dialog_button_ok">OK</string>
+    <string name="location_not_select">Location not select</string>
+    <string name="save">Save</string>
+    <string name="progress_dialog_searching">Searching...</string>
+
+
 
     <!-- SettingActivity -->
 
@@ -61,6 +67,11 @@
     <string name="enter_valid_input">Enter valid number</string>
     <string name="delete_favourite_item">Delete favourite</string>
     <string name="title_activity_settings">Settings</string>
+    <string name="check_update">Check for updates</string>
+    <string name="check_update_summary">Automatically check for latest version on Github</string>
+    <string name="advanced_summary">Hook system for better Location set you must select system</string>
+    <string name="random_position">Random position</string>
+    <string name="random_position_summary">Location position will be random around set location</string>
 
 
 </resources>

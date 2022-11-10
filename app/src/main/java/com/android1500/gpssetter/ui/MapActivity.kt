@@ -256,10 +256,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
         val editText = view.findViewById<EditText>(R.id.search_edittxt)
         editText.hint = getString(R.string.search_hint)
         val progressBar = ProgressDialog(this)
-        progressBar.setMessage("Searching...")
-        alertDialog.setTitle("Search")
+        progressBar.setMessage(getString(R.string.progress_dialog_searching))
+        alertDialog.setTitle(getString(R.string.search))
         alertDialog.setView(view)
-        alertDialog.setPositiveButton("Search") { _, _ ->
+        alertDialog.setPositiveButton(getString(R.string.search)) { _, _ ->
             if (isNetworkConnected()){
                 lifecycleScope.launch(Dispatchers.Main) {
                     val  getInput = editText.text.toString()
@@ -295,7 +295,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     }
 
     private fun addFavouriteDialog(){
-
         alertDialog =  MaterialAlertDialogBuilder(this).apply {
             val view = layoutInflater.inflate(R.layout.dialog_layout,null)
             val editText = view.findViewById<EditText>(R.id.search_edittxt)
@@ -303,11 +302,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
             setPositiveButton(getString(R.string.dialog_button_add)) { _, _ ->
                 val s = editText.text.toString()
                 if (!mMarker?.isVisible!!){
-                  showToast("Location not select")
+                  showToast(getString(R.string.location_not_select))
                 }else{
                     viewModel.storeFavorite(s, lat, lon)
                     viewModel.response.observe(this@MapActivity){
-                        if (it == (-1).toLong()) showToast("Can't save") else showToast("Save")
+                        if (it == (-1).toLong()) showToast(getString(R.string.cant_save)) else showToast(getString(R.string.save))
                     }
                 }
             }

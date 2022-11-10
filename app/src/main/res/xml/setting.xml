@@ -24,8 +24,8 @@
             android:defaultValue="1"/>
 
         <SwitchPreference
-            android:title="Check for updates"
-            android:summary="Automatically check for latest version on Github"
+            android:title="@string/check_update"
+            android:summary="@string/check_update_summary"
             android:icon="@drawable/ic_update"
             android:key="disable_update"/>
 
@@ -38,7 +38,7 @@
 
         <CheckBoxPreference
             android:title="@string/advance_hook"
-            android:summary="Hook system for better Location set you must select system"
+            android:summary="@string/advanced_summary"
             android:key="isHookedSystem"
             android:icon="@drawable/ic_advance_hook"/>
 
@@ -51,8 +51,8 @@
             android:summary="10 m."/>
 
         <SwitchPreference
-            android:title="Random position"
-            android:summary="Location position will be random around set location"
+            android:title="@string/random_position"
+            android:summary="@string/random_position_summary"
             android:icon="@drawable/ic_random_position"
             android:key="random_position"/>
 
