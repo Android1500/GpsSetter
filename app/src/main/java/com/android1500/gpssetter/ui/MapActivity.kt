@@ -43,6 +43,7 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.highcapable.yukihookapi.YukiHookAPI
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
@@ -89,16 +90,12 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     }
 
     private fun isModuleEnable(){
-        viewModel.isXposed.observe(this){ isXposed ->
-            xposedDialog?.dismiss()
-            xposedDialog = null
-            if (!isXposed){
-                xposedDialog = MaterialAlertDialogBuilder(this).run {
-                    setTitle(R.string.error_xposed_module_missing)
-                    setMessage(R.string.error_xposed_module_missing_desc)
-                    setCancelable(BuildConfig.DEBUG)
-                    show()
-                }
+        if (!YukiHookAPI.Status.isModuleActive){
+            xposedDialog = MaterialAlertDialogBuilder(this).run {
+                setTitle(R.string.error_xposed_module_missing)
+                setMessage(R.string.error_xposed_module_missing_desc)
+                setCancelable(BuildConfig.DEBUG)
+                show()
             }
         }
 

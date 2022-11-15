@@ -3,6 +3,7 @@ package com.android1500.gpssetter
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import com.android1500.gpssetter.utils.PrefManager
+import com.highcapable.yukihookapi.hook.xposed.application.ModuleApplication
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +13,7 @@ lateinit var gsApp: App
 
 
 @HiltAndroidApp
-class App : Application() {
+class App : ModuleApplication() {
     val globalScope = CoroutineScope(Dispatchers.Default)
 
     companion object {
