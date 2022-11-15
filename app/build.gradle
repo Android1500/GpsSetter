@@ -5,7 +5,7 @@ plugins {
     id 'dagger.hilt.android.plugin'
     id 'kotlin-kapt'
     id 'kotlin-parcelize'
-    id 'com.google.devtools.ksp' version '1.7.20-1.0.7'
+    id 'com.google.devtools.ksp' version '1.7.21-1.0.8'
 }
 
 def tagName = 'v1.2.10'
