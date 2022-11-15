@@ -81,7 +81,7 @@ object LocationHook : YukiBaseHooker() {
                         }
                         beforeHook {
                             val location = Location(LocationManager.GPS_PROVIDER)
-                            location.time = System.currentTimeMillis() - (100..10000).random()
+                            location.time = System.currentTimeMillis() - 300
                             location.latitude = newlat
                             location.longitude = newlng
                             location.altitude = 0.0
@@ -126,7 +126,7 @@ object LocationHook : YukiBaseHooker() {
                             lateinit var originLocation: Location
                             if (args[0] == null){
                                 location = Location(LocationManager.GPS_PROVIDER)
-                                location.time = System.currentTimeMillis() - (100..10000).random()
+                                location.time = System.currentTimeMillis() - 300
                             }else {
                                 originLocation = args(0).any() as Location
                                 location = Location(originLocation.provider)
@@ -220,7 +220,7 @@ object LocationHook : YukiBaseHooker() {
                     lateinit var originLocation: Location
                     if (args[0] == null){
                         location = Location(LocationManager.GPS_PROVIDER)
-                        location.time = System.currentTimeMillis() - (100..10000).random()
+                        location.time = System.currentTimeMillis() - 300
                     }else {
                         originLocation = args(0).any() as Location
                         location = Location(originLocation.provider)
@@ -259,7 +259,7 @@ object LocationHook : YukiBaseHooker() {
                 beforeHook {
                     val provider = args[0] as String
                     val location = Location(provider)
-                    location.time = System.currentTimeMillis() - (100..10000).random()
+                    location.time = System.currentTimeMillis() - 300
                     location.latitude = newlat
                     location.longitude = newlng
                     location.altitude = 0.0
