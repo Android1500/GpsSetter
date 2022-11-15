@@ -20,9 +20,7 @@ class HookEntry : IYukiHookXposedInit {
 
 
     override fun onHook() = encase {
-        if (packageName != BuildConfig.APPLICATION_ID){
-            loadHooker(LocationHook)
-        }
+        loadHooker(LocationHook)
     }
 
 

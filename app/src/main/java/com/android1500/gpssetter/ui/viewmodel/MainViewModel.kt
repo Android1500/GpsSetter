@@ -1,4 +1,4 @@
-package com.android1500.gpssetter.viewmodel
+package com.android1500.gpssetter.ui.viewmodel
 
 
 import android.app.DownloadManager
@@ -25,6 +25,8 @@ import com.android1500.gpssetter.utils.PrefManager
 import com.android1500.gpssetter.room.Favourite
 import com.android1500.gpssetter.selfhook.XposedSelfHooks
 import com.android1500.gpssetter.update.UpdateChecker
+import com.highcapable.yukihookapi.YukiHookAPI
+import com.highcapable.yukihookapi.hook.xposed.proxy.IYukiHookXposedInit
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -85,7 +87,7 @@ class MainViewModel @Inject constructor(
     val isXposed = MutableLiveData<Boolean>()
     fun updateXposedState() {
         onMain {
-            isXposed.value = XposedSelfHooks.isXposedModuleEnabled()
+            isXposed.value = YukiHookAPI.Status.isModuleActive
         }
     }
 

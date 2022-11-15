@@ -5,10 +5,13 @@ import android.app.AndroidAppHelper
 import android.app.PendingIntent
 import android.content.Context
 import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
+import android.location.LocationRequest
 import com.android1500.gpssetter.gsApp
 import com.android1500.gpssetter.xposed.LocationHook.hook
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
+import com.highcapable.yukihookapi.hook.type.java.BooleanType
 import com.highcapable.yukihookapi.hook.type.java.DoubleType
 import com.highcapable.yukihookapi.hook.type.java.FloatType
 import de.robv.android.xposed.XposedBridge
@@ -63,12 +66,16 @@ object LocationHook : YukiBaseHooker() {
 
         loadSystem {
             if (settings.isStarted && settings.isHookedSystem) {
+                if (System.currentTimeMillis() - mLastUpdated > 200){
+                    updateLocation()
+                }
+
                 findClass(  "com.android.server.LocationManagerService").hook {
                     injectMember {
                         method {
                             name = "getLastLocation"
                             param(
-                                "android.location.LocationRequest",
+                                LocationRequest::class.java,
                                 String::class.java
                             )
                         }
@@ -88,14 +95,14 @@ object LocationHook : YukiBaseHooker() {
                         method {
                             name =  "requestLocationUpdates"
                             param(
-                                "android.location.LocationRequest",
+                                LocationRequest::class.java,
                                 "android.location.ILocationListener",
                                 PendingIntent::class.java,
                                 String::class.java,
                             )
                         }
                         beforeHook {
-                            val ILocationListener = args[1]
+                            val ll = args[1] as Any
                             val location = Location(LocationManager.GPS_PROVIDER)
                             location.time = System.currentTimeMillis() - (100..10000).random()
                             location.latitude = newlat
@@ -105,15 +112,35 @@ object LocationHook : YukiBaseHooker() {
                             location.speedAccuracyMetersPerSecond = 0F
                             location.accuracy = accuracy
                             result = location
+                            XposedHelpers.callMethod(ll,"onLocationChanged",location)
                         }
                     }
 
+
+                    injectMember {
+                        method {
+                            name = "addGnssBatchingCallback"
+                            returnType = BooleanType
+                        }
+                        replaceToFalse()
+                    }
+                    injectMember {
+                        method {
+                            name = "addGnssMeasurementsListener"
+                            returnType = BooleanType
+                        }
+                        replaceToFalse()
+                    }
+                    injectMember {
+                        method {
+                            name = "addGnssNavigationMessageListener"
+                            returnType = BooleanType
+                        }
+                        replaceToFalse()
+                    }
+
                 }
-
-
-
             }
-
         }
 
         findClass(className).hook {
@@ -169,6 +196,9 @@ object LocationHook : YukiBaseHooker() {
                     param(Location::class.java)
                 }
                 beforeHook {
+                    if (System.currentTimeMillis() - mLastUpdated > 200){
+                        updateLocation()
+                    }
                     lateinit var location: Location
                     lateinit var originLocation: Location
                     if (args[0] == null){
@@ -201,13 +231,8 @@ object LocationHook : YukiBaseHooker() {
                 }
             }
 
-
-
-
         }
 
-
     }
-
 
 }

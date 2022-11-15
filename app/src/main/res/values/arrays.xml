@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="scopes">
+        <item>android</item>
+
+    </string-array>
 
 
     <!-- MapType Preference -->

@@ -32,7 +32,7 @@ import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapBinding
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.utils.ext.*
-import com.android1500.gpssetter.viewmodel.MainViewModel
+import com.android1500.gpssetter.ui.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -90,13 +90,18 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     }
 
     private fun isModuleEnable(){
-        if (!YukiHookAPI.Status.isModuleActive){
-            xposedDialog = MaterialAlertDialogBuilder(this).run {
-                setTitle(R.string.error_xposed_module_missing)
-                setMessage(R.string.error_xposed_module_missing_desc)
-                setCancelable(BuildConfig.DEBUG)
-                show()
+        viewModel.isXposed.observe(this) { isXposed ->
+            xposedDialog?.dismiss()
+            xposedDialog = null
+            if (!isXposed) {
+                xposedDialog = MaterialAlertDialogBuilder(this).run {
+                    setTitle(R.string.error_xposed_module_missing)
+                    setMessage(R.string.error_xposed_module_missing_desc)
+                    setCancelable(BuildConfig.DEBUG)
+                    show()
+                }
             }
+
         }
 
     }
