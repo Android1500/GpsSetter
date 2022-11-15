@@ -91,31 +91,6 @@ object LocationHook : YukiBaseHooker() {
                             result = location
                         }
                     }
-                    injectMember {
-                        method {
-                            name =  "requestLocationUpdates"
-                            param(
-                                LocationRequest::class.java,
-                                "android.location.ILocationListener",
-                                PendingIntent::class.java,
-                                String::class.java,
-                            )
-                        }
-                        beforeHook {
-                            val ll = args[1]
-                            val location = Location(LocationManager.GPS_PROVIDER)
-                            location.time = System.currentTimeMillis() - (100..10000).random()
-                            location.latitude = newlat
-                            location.longitude = newlng
-                            location.altitude = 0.0
-                            location.speed = 0F
-                            location.speedAccuracyMetersPerSecond = 0F
-                            location.accuracy = accuracy
-                            result = location
-                            XposedHelpers.callMethod(ll,"onLocationChanged",location)
-                        }
-                    }
-
 
                     injectMember {
                         method {
@@ -180,6 +155,8 @@ object LocationHook : YukiBaseHooker() {
                         }
                     }
                 }
+
+
             }
         }
 
@@ -271,6 +248,35 @@ object LocationHook : YukiBaseHooker() {
                 }
             }
 
+        }
+
+        findClass("android.location.LocationManager").hook {
+            injectMember {
+                method {
+                    name = "getLastKnownLocation"
+                    param(String::class.java)
+                }
+                beforeHook {
+                    val provider = args[0] as String
+                    val location = Location(provider)
+                    location.time = System.currentTimeMillis() - (100..10000).random()
+                    location.latitude = newlat
+                    location.longitude = newlng
+                    location.altitude = 0.0
+                    location.speed = 0F
+                    location.speedAccuracyMetersPerSecond = 0F
+                    XposedBridge.log("GS: lat: ${location.latitude}, lon: ${location.longitude}")
+                    try {
+                        HiddenApiBypass.invoke(location.javaClass, location, "setIsFromMockProvider", false)
+                    } catch (e: Exception) {
+                        XposedBridge.log("GS: Not possible to mock (Pre Q)! $e")
+                    }
+                    XposedBridge.log("provider --> $provider")
+                    result = location
+
+
+                }
+            }
         }
 
     }
