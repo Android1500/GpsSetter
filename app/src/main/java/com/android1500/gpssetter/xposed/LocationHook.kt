@@ -102,7 +102,7 @@ object LocationHook : YukiBaseHooker() {
                             )
                         }
                         beforeHook {
-                            val ll = args[1] as Any
+                            val ll = args[1]
                             val location = Location(LocationManager.GPS_PROVIDER)
                             location.time = System.currentTimeMillis() - (100..10000).random()
                             location.latitude = newlat
@@ -139,6 +139,46 @@ object LocationHook : YukiBaseHooker() {
                         replaceToFalse()
                     }
 
+                }
+                findClass("com.android.server.LocationManagerService.Receiver").hook {
+                    injectMember {
+                        method {
+                            name = "callLocationChangedLocked"
+                            param(Location::class.java)
+                        }
+                        beforeHook {
+                            lateinit var location: Location
+                            lateinit var originLocation: Location
+                            if (args[0] == null){
+                                location = Location(LocationManager.GPS_PROVIDER)
+                                location.time = System.currentTimeMillis() - (100..10000).random()
+                            }else {
+                                originLocation = args(0).any() as Location
+                                location = Location(originLocation.provider)
+                                location.time = originLocation.time
+                                location.accuracy = accuracy
+                                location.bearing = originLocation.bearing
+                                location.bearingAccuracyDegrees = originLocation.bearingAccuracyDegrees
+                                location.elapsedRealtimeNanos = originLocation.elapsedRealtimeNanos
+                                location.verticalAccuracyMeters = originLocation.verticalAccuracyMeters
+                            }
+
+                            location.latitude = newlat
+                            location.longitude = newlng
+                            location.altitude = 0.0
+                            location.speed = 0F
+                            location.speedAccuracyMetersPerSecond = 0F
+                            XposedBridge.log("GS: lat: ${location.latitude}, lon: ${location.longitude}")
+                            try {
+                                HiddenApiBypass.invoke(location.javaClass, location, "setIsFromMockProvider", false)
+                            } catch (e: Exception) {
+                                XposedBridge.log("GS: Not possible to mock (Pre Q)! $e")
+                            }
+                            args[0] = location
+
+
+                        }
+                    }
                 }
             }
         }

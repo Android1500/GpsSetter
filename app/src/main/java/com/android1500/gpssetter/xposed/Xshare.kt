@@ -46,6 +46,8 @@ import de.robv.android.xposed.XSharedPreferences
      val accuracy : String?
      get() = pref().getString("accuracy_settings","10")
 
+     val reload = pref().reload()
+
 
 
 
