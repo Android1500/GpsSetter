@@ -1,10 +1,12 @@
 # GPS Setter
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/Android1500/GpsSetter)
-[![Github All Releases](https://img.shields.io/github/downloads/Xposed-Modules-Repo/com.android1500.gpssetter/total.svg)]()
+[![Github All Releases](https://img.shields.io/github/downloads/Android1500/GpsSetter/total?label=Release)]()
+[![Blank](https://img.shields.io/github/downloads/Xposed-Modules-Repo/com.android1500.gpssetter/total?label=LSPosed%20Repo&logo=Android&style=flat&labelColor=F48FB1&logoColor=ffffff)](https://github.com/Xposed-Modules-Repo/com.android1500.gpssetter/releases)
 [![GitHub stars](https://img.shields.io/github/stars/Android1500/GpsSetter)](https://github.com/Android1500/GpsSetter/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/Android1500/GpsSetter)](https://github.com/Android1500/GpsSetter/issues)
 [![GitHub license](https://img.shields.io/github/license/Android1500/GpsSetter)](https://github.com/Android1500/GpsSetter/blob/master/LICENSE)
+
 
 ![](https://github.com/Xposed-Modules-Repo/com.android1500.gpssetter/blob/main/banner.png) 
 
