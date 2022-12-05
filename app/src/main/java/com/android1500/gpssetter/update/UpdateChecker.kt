@@ -21,7 +21,7 @@ class UpdateChecker @Inject constructor(private val apiResponse : GitHubService)
             getReleaseList()?.let { gitHubReleaseResponse ->
                 val currentTag = gitHubReleaseResponse.tagName
 
-                if (currentTag != null && (currentTag != BuildConfig.TAG_NAME && PrefManager.disableUpdate)) {
+                if (currentTag != null && (currentTag != BuildConfig.TAG_NAME && PrefManager.disableUpdate.value)) {
                     //New update available!
                     val asset =
                         gitHubReleaseResponse.assets?.firstOrNull { it.name?.endsWith(".apk") == true }

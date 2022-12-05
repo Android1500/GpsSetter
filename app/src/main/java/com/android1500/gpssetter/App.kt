@@ -1,9 +1,9 @@
 package com.android1500.gpssetter
 
-import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import com.android1500.gpssetter.utils.PrefManager
 import com.highcapable.yukihookapi.hook.xposed.application.ModuleApplication
+import com.kieronquinn.monetcompat.core.MonetCompat
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +28,8 @@ class App : ModuleApplication() {
         super.onCreate()
         gsApp = this
         commonInit()
-        AppCompatDelegate.setDefaultNightMode(PrefManager.darkTheme)
+        MonetCompat.enablePaletteCompat()
+        AppCompatDelegate.setDefaultNightMode(PrefManager.darkTheme.value)
 
     }
 

@@ -1,15 +1,20 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.GPSSetter" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.GPSSetter" parent="Theme.Material3.DayNight.NoActionBar">
 
+        <!-- Primary brand color. -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorAccent">@color/accent</item>/item>
-        <item name="colorOnPrimary">@color/white</item>
+
+
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">@bool/lightStatusNav</item>
+        <item name="android:windowLightNavigationBar">@bool/lightStatusNav</item>
+        <item name="android:overScrollMode">@integer/overscroll_enabled</item>
+        <item name="actionOverflowMenuStyle">@style/GPSSetterOverflowMenu</item>
 
     </style>
-
 
 
 </resources>

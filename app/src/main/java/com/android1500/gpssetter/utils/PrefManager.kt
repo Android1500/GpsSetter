@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.gsApp
 import com.android1500.gpssetter.selfhook.XposedSelfHooks
+import com.highcapable.yukihookapi.hook.xposed.prefs.data.PrefsData
 import dagger.Reusable
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -31,47 +32,47 @@ object PrefManager   {
 
 
     private val pref: SharedPreferences by lazy {
-         try {
-             val prefsFile = "${BuildConfig.APPLICATION_ID}_prefs"
-             gsApp.getSharedPreferences(
-                 prefsFile,
-                 Context.MODE_WORLD_READABLE
-             )
-         }catch (e:SecurityException){
-             val prefsFile = "${BuildConfig.APPLICATION_ID}_prefs"
-             gsApp.getSharedPreferences(
-                 prefsFile,
-                 Context.MODE_PRIVATE
-             )
-         }
+        try {
+            val prefsFile = "${BuildConfig.APPLICATION_ID}_prefs"
+            gsApp.getSharedPreferences(
+                prefsFile,
+                Context.MODE_WORLD_READABLE
+            )
+        }catch (e:SecurityException){
+            val prefsFile = "${BuildConfig.APPLICATION_ID}_prefs"
+            gsApp.getSharedPreferences(
+                prefsFile,
+                Context.MODE_PRIVATE
+            )
+        }
 
     }
 
 
     val isStarted : Boolean
-    get() = pref.getBoolean(START, false)
+        get() = pref.getBoolean(START, false)
 
     val getLat : Double
-    get() = pref.getFloat(LATITUDE, 40.7128F).toDouble()
+        get() = pref.getFloat(LATITUDE, 40.7128F).toDouble()
 
     val getLng : Double
-    get() = pref.getFloat(LONGITUDE, -74.0060F).toDouble()
+        get() = pref.getFloat(LONGITUDE, -74.0060F).toDouble()
 
     var isHookSystem : Boolean
-    get() = pref.getBoolean(HOOKED_SYSTEM, false)
-    set(value) { pref.edit().putBoolean(HOOKED_SYSTEM,value).apply() }
+        get() = pref.getBoolean(HOOKED_SYSTEM, false)
+        set(value) { pref.edit().putBoolean(HOOKED_SYSTEM,value).apply() }
 
     var isRandomPosition :Boolean
-    get() = pref.getBoolean(RANDOM_POSITION, false)
-    set(value) { pref.edit().putBoolean(RANDOM_POSITION, value).apply() }
+        get() = pref.getBoolean(RANDOM_POSITION, false)
+        set(value) { pref.edit().putBoolean(RANDOM_POSITION, value).apply() }
 
     var accuracy : String?
-    get() = pref.getString(ACCURACY_SETTING,"10")
-    set(value) { pref.edit().putString(ACCURACY_SETTING,value).apply()}
+        get() = pref.getString(ACCURACY_SETTING,"10")
+        set(value) { pref.edit().putString(ACCURACY_SETTING,value).apply()}
 
     var mapType : Int
-    get() = pref.getInt(MAP_TYPE,1)
-    set(value) { pref.edit().putInt(MAP_TYPE,value).apply()}
+        get() = pref.getInt(MAP_TYPE,1)
+        set(value) { pref.edit().putInt(MAP_TYPE,value).apply()}
 
     var darkTheme: Int
         get() = pref.getInt(DARK_THEME, DayNightDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
@@ -117,9 +118,6 @@ object PrefManager   {
             method.invoke()
         }
     }
-
-
-
 
 
 }

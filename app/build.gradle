@@ -48,12 +48,14 @@ dependencies {
 
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.7.0-alpha01'
-    implementation 'com.google.android.material:material:1.8.0-alpha02'
+    implementation 'com.google.android.material:material:1.8.0-alpha03'
     implementation 'androidx.activity:activity-ktx:1.6.1'
     implementation 'com.google.android.gms:play-services-maps:18.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha04'
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
+    implementation "androidx.drawerlayout:drawerlayout:1.2.0-alpha01"
+
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
@@ -92,6 +94,10 @@ dependencies {
 
     implementation 'com.highcapable.yukihookapi:api:1.1.4'
     ksp 'com.highcapable.yukihookapi:ksp-xposed:1.1.4'
+    implementation 'com.facebook.shimmer:shimmer:0.5.0'
+    implementation 'com.github.KieronQuinn:MonetCompat:0.4.1'
+    implementation 'androidx.palette:palette:1.0.0'
+
 
 
 

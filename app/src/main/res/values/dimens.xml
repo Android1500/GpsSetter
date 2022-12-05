@@ -11,6 +11,12 @@
     <dimen name="search_box_height">48dp</dimen>
     <dimen name="search_box_corners">24dp</dimen>
     <dimen name="clear_button_size">36dp</dimen>
-    <dimen name="app_editor_header_elevation">4dp</dimen>
-    <dimen name="snackbar_corner_radius">4dp</dimen>
+    <dimen name="bottom_sheet_elevation">1dp</dimen>
+
+
+
+    <dimen name="location_history_margin">5dp</dimen>
+    <dimen name="margin_16">16dp</dimen>
+
+
 </resources>

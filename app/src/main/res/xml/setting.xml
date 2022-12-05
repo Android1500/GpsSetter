@@ -23,11 +23,12 @@
             android:entryValues="@array/map_value"
             android:defaultValue="1"/>
 
-        <SwitchPreference
+        <rikka.material.preference.MaterialSwitchPreference
             android:title="@string/check_update"
             android:summary="@string/check_update_summary"
             android:icon="@drawable/ic_update"
-            android:key="disable_update"/>
+            android:key="disable_update"
+            android:defaultValue="false"/>
 
 
 
@@ -50,7 +51,7 @@
             android:icon="@drawable/ic_accuracy"
             android:summary="10 m."/>
 
-        <SwitchPreference
+        <rikka.material.preference.MaterialSwitchPreference
             android:title="@string/random_position"
             android:summary="@string/random_position_summary"
             android:icon="@drawable/ic_random_position"

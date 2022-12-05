@@ -72,6 +72,11 @@
     <string name="advanced_summary">Hook system for better Location set (Need Reboot)</string>
     <string name="random_position">Random position</string>
     <string name="random_position_summary">Location position will be random around set location</string>
+    <string name="drawer_open">open</string>
+    <string name="drawer_close">close</string>
+    <string name="stop">Stop</string>
+    <string name="start_spoofing">Set location</string>
+    <string name="current_address">current address</string>
 
 
 </resources>

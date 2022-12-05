@@ -12,16 +12,23 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.WindowCompat
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.databinding.SettingsActivityBinding
 import com.android1500.gpssetter.utils.PrefManager
+import com.highcapable.yukihookapi.hook.factory.modulePrefs
+import com.highcapable.yukihookapi.hook.xposed.prefs.YukiHookModulePrefs
+import com.highcapable.yukihookapi.hook.xposed.prefs.ui.ModulePreferenceFragment
+import com.kieronquinn.monetcompat.app.MonetCompatActivity
 import rikka.preference.SimpleMenuPreference
 
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : MonetCompatActivity() {
+
+
 
     private val binding by lazy {
         SettingsActivityBinding.inflate(layoutInflater)
@@ -66,9 +73,14 @@ class SettingsActivity : AppCompatActivity() {
     }
 
 
+
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+        theme.applyStyle(rikka.material.preference.R.style.ThemeOverlay_Rikka_Material3_Preference, true);
         setSupportActionBar(binding.toolbar)
         if (savedInstanceState == null) {
             supportFragmentManager
@@ -77,6 +89,7 @@ class SettingsActivity : AppCompatActivity() {
                 .commit()
         }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
 
         onBackPressedDispatcher.addCallback(
             this,
@@ -97,9 +110,10 @@ class SettingsActivity : AppCompatActivity() {
     }
 
 
-    class SettingsPreferenceFragment : PreferenceFragmentCompat() {
+    class SettingsPreferenceFragment : ModulePreferenceFragment() {
 
-        override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+
+        override fun onCreatePreferencesInModuleApp(savedInstanceState: Bundle?, rootKey: String?) {
             preferenceManager?.preferenceDataStore = SettingPreferenceDataStore()
             setPreferencesFromResource(R.xml.setting, rootKey)
 

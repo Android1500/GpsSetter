@@ -1,50 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/container"
-    android:fitsSystemWindows="true">
+    android:orientation="vertical"
+    android:fitsSystemWindows="false">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/bar"
+
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize" />
+            android:layout_height="?attr/actionBarSize"
+            android:layout_marginTop="24dp"
+            android:elevation="1dp"
+            app:navigationIcon="@drawable/ic_baseline_menu_24"/>
 
-    </com.google.android.material.appbar.AppBarLayout>
+        <include
+            android:id="@+id/map_container"
+            layout="@layout/map_container"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/favourite"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="@dimen/padding_8"
+            android:layout_alignParentEnd="true"
+            android:layout_below="@id/getlocation_container"
+            android:alpha="0.95"
+            android:elevation="10dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            app:backgroundTint="@color/background"
+            app:icon="@drawable/ic_baseline_favorite_border_24"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="24dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/getlocation_container"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:alpha="0.95"
+            android:elevation="10dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:rotation="30"
+            app:backgroundTint="@color/background"
+            app:icon="@drawable/ic_baseline_my_location_24"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="24dp" />
+
+    </RelativeLayout>
 
 
-    <include
-        android:id="@+id/map_container"
-        layout="@layout/map_container"/>
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/coordinator"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <include
+            android:id="@+id/bottom_sheet_container"
+            layout="@layout/bottom_sheet" />
 
 
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/start"
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:animateLayoutChanges="true"
-        android:layout_gravity="bottom|start"
-        android:layout_marginStart="@dimen/padding_16"
-        android:layout_marginBottom="32dp"
-        android:src="@drawable/ic_play" />
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:headerLayout="@layout/drawer_header"
+        app:menu="@menu/main_menu">
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/stop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|start"
-        android:animateLayoutChanges="true"
-        android:layout_marginStart="@dimen/padding_16"
-        android:layout_marginBottom="32dp"
-        android:src="@drawable/ic_stop"
-        android:visibility="gone" />
+    </com.google.android.material.navigation.NavigationView>
 
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>

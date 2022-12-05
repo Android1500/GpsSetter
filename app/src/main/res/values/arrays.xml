@@ -22,6 +22,7 @@
         <item>4</item>
     </string-array>
 
+    <!-- DarkTheme Preference -->
 
     <string-array name="theme_texts" translatable="false">
         <item>Always off</item>

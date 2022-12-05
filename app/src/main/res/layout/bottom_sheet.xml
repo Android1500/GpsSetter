@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bottom_sheet"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bottom_sheet_background"
+    android:orientation="vertical"
+    app:behavior_hideable="false"
+    android:paddingBottom="15dp"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior" >
+
+    <RelativeLayout
+        android:id="@+id/search_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <View
+            android:layout_margin="8dp"
+            android:id="@+id/drag"
+            android:layout_height="5dp"
+            android:layout_width="32dp"
+            android:layout_centerHorizontal="true"/>
+
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/address_shimmer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="38dp"
+            android:layout_marginEnd="38dp"
+            android:layout_below="@id/drag">
+
+            <TextView
+                android:id="@+id/firstAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="1"
+                android:text="@string/current_address"
+                android:textColor="@color/background_dark"
+                android:textSize="12sp" />
+        </com.facebook.shimmer.ShimmerFrameLayout>
+
+
+
+        <include
+            layout="@layout/include_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/address_shimmer"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="18dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="18dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_vertical"
+            android:lines="1"
+            android:padding="8dp"
+            android:paddingStart="8dp"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:id="@+id/search" />
+
+
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/start_spoofing"
+            style="@style/Widget.Material3.Button.Icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/search"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="18dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:lines="1"
+            android:text="@string/start_spoofing"
+            android:visibility="visible"
+            app:icon="@drawable/ic_play"
+            app:iconGravity="textStart" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/stop_button"
+            style="@style/Widget.Material3.Button.Icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/search"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="18dp"
+            android:layout_marginBottom="8dp"
+            android:lines="1"
+            android:gravity="center"
+            android:text="@string/stop"
+            android:visibility="gone"
+            app:icon="@drawable/ic_stop"
+            app:iconGravity="textStart" />
+
+
+
+    </RelativeLayout>
+
+
+
+
+
+</LinearLayout>

@@ -4,22 +4,28 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.ProgressDialog
+import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.drawable.GradientDrawable
 import android.location.Address
 import android.location.Geocoder
+import android.location.LocationManager
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup.MarginLayoutParams
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.graphics.ColorUtils
+import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -30,9 +36,9 @@ import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.R
 import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapBinding
+import com.android1500.gpssetter.ui.viewmodel.MainViewModel
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.utils.ext.*
-import com.android1500.gpssetter.ui.viewmodel.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -41,9 +47,12 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.elevation.ElevationOverlayProvider
 import com.google.android.material.progressindicator.LinearProgressIndicator
-import com.highcapable.yukihookapi.YukiHookAPI
+import com.kieronquinn.monetcompat.app.MonetCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
@@ -53,8 +62,9 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.properties.Delegates
 
+
 @AndroidEntryPoint
-class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener {
+class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener {
 
     private val binding by lazy { ActivityMapBinding.inflate(layoutInflater) }
     private lateinit var mMap: GoogleMap
@@ -70,16 +80,191 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
 
+    private val elevationOverlayProvider by lazy {
+        ElevationOverlayProvider(this)
+    }
+
+    private val headerBackground by lazy {
+        elevationOverlayProvider.compositeOverlayWithThemeSurfaceColorIfNeeded(
+            resources.getDimension(R.dimen.bottom_sheet_elevation)
+        )
+    }
+    override val applyBackgroundColorToWindow = true
+
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        setContentView(binding.root)
+        lifecycleScope.launchWhenCreated {
+            monet.awaitMonetReady()
+            setContentView(binding.root)
+        }
         setSupportActionBar(binding.toolbar)
         initializeMap()
-        setFloatActionButton()
         isModuleEnable()
         updateChecker()
+        setBottomSheet()
+        setUpNavigationView()
+        setFloatActionButton()
+        setupMonet()
+        setupButton()
+        setDrawer()
+
+
+
+    }
+
+
+    @SuppressLint("MissingPermission")
+    private fun setupButton(){
+        binding.favourite.setOnClickListener {
+            addFavouriteDialog()
+        }
+        binding.getlocationContainer.setOnClickListener {
+            try {
+
+                if (checkSinglePermission(Manifest.permission.ACCESS_FINE_LOCATION)){
+                    val locationManager =
+                        getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                    val location =
+                        locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                    location?.let {
+                        lat = it.latitude
+                        lon = it.longitude
+                        moveMapToNewLocation(true)
+                    }
+
+
+                }
+            }catch (e : Exception){
+                e.message
+            }
+        }
+
+    }
+
+    private fun setDrawer(){
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+       val mDrawerToggle = object : ActionBarDrawerToggle(
+            this,
+            binding.container,
+            binding.toolbar,
+            R.string.drawer_open,
+            R.string.drawer_close
+        ) {
+            override fun onDrawerClosed(view: View) {
+                super.onDrawerClosed(view)
+                invalidateOptionsMenu()
+            }
+
+            override fun onDrawerOpened(drawerView: View) {
+                super.onDrawerOpened(drawerView)
+                invalidateOptionsMenu()
+            }
+        }
+        binding.container.setDrawerListener(mDrawerToggle)
+
+    }
+
+    private fun setBottomSheet(){
+
+
+        val progressBar = ProgressDialog(this)
+        progressBar.setMessage(getString(R.string.progress_dialog_searching))
+        val bottom = BottomSheetBehavior.from(binding.bottomSheetContainer.bottomSheet)
+        with(binding.bottomSheetContainer){
+
+            search.searchBox.setOnEditorActionListener { v, actionId, _ ->
+
+                if (actionId == EditorInfo.IME_ACTION_SEARCH){
+
+                    if (isNetworkConnected()){
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            val  getInput = v.text.toString()
+                            if (getInput.isNotEmpty()){
+                                getSearchAddress(getInput).let {
+                                    it.collect { result ->
+                                        when(result) {
+                                            is SearchProgress.Progress -> {
+                                                progressBar.show()
+                                            }
+                                            is SearchProgress.Complete -> {
+                                                lat = result.lat
+                                                lon = result.lon
+                                                progressBar.dismiss()
+                                                moveMapToNewLocation(true)
+                                            }
+
+                                            is SearchProgress.Fail -> {
+                                                progressBar.dismiss()
+                                                showToast(result.error!!)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        showToast(getString(R.string.no_internet))
+                    }
+                    return@setOnEditorActionListener true
+                }
+                return@setOnEditorActionListener false
+            }
+
+        }
+
+
+        binding.mapContainer.map.setOnApplyWindowInsetsListener { v, insets ->
+
+            val topInset: Int = insets.systemWindowInsetTop
+            val bottomInset: Int = insets.systemWindowInsetBottom
+
+            bottom.peekHeight = binding.bottomSheetContainer.searchLayout.measuredHeight + bottomInset
+
+
+            val searchParams = binding.bottomSheetContainer.searchLayout.layoutParams as MarginLayoutParams
+            searchParams.bottomMargin  = bottomInset + searchParams.bottomMargin
+
+            binding.navView.setPadding(0,topInset,0,0)
+
+            insets.consumeSystemWindowInsets()
+        }
+
+        bottom.state = BottomSheetBehavior.STATE_COLLAPSED
+
+    }
+
+    private fun setupMonet() {
+        val secondaryBackground = monet.getBackgroundColorSecondary(this)
+        binding.bottomSheetContainer.search.searchBox.backgroundTintList = ColorStateList.valueOf(secondaryBackground!!)
+        val root =  binding.bottomSheetContainer.root.background as GradientDrawable
+        root.setColor(ColorUtils.setAlphaComponent(headerBackground,235))
+
+    }
+
+
+
+    private fun setUpNavigationView() {
+        binding.navView.setNavigationItemSelectedListener {
+            when(it.itemId){
+
+                R.id.get_favourite -> {
+                    openFavouriteListDialog()
+                }
+                R.id.settings -> {
+                    startActivity(Intent(this,SettingsActivity::class.java))
+                }
+                R.id.about -> {
+                    aboutDialog()
+                }
+            }
+            binding.container.closeDrawer(GravityCompat.START)
+            true
+        }
 
     }
 
@@ -106,21 +291,20 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
 
     }
 
-
     private fun setFloatActionButton() {
         if (viewModel.isStarted) {
-            binding.start.visibility = View.GONE
-            binding.stop.visibility = View.VISIBLE
+            binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
+            binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
         }
 
-        binding.start.setOnClickListener {
+        binding.bottomSheetContainer.startSpoofing.setOnClickListener {
             viewModel.update(true, lat, lon)
             mLatLng.let {
                 mMarker?.position = it!!
             }
             mMarker?.isVisible = true
-            binding.start.visibility = View.GONE
-            binding.stop.visibility = View.VISIBLE
+            binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
+            binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
             lifecycleScope.launch {
                 mLatLng?.getAddress(this@MapActivity)?.let { address ->
                     address.collect{ value ->
@@ -128,19 +312,24 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                     }
                 }
             }
-           showToast(getString(R.string.location_set))
+            showToast(getString(R.string.location_set))
         }
-        binding.stop.setOnClickListener {
+        binding.bottomSheetContainer.stopButton.setOnClickListener {
             mLatLng.let {
                 viewModel.update(false, it!!.latitude, it.longitude)
             }
             mMarker?.isVisible = false
-            binding.stop.visibility = View.GONE
-            binding.start.visibility = View.VISIBLE
+            binding.bottomSheetContainer.stopButton.visibility = View.GONE
+            binding.bottomSheetContainer.startSpoofing.visibility = View.VISIBLE
             cancelNotification()
             showToast(getString(R.string.location_unset))
         }
     }
+
+
+
+
+
 
 
     @SuppressLint("MissingPermission")
@@ -149,8 +338,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
         with(mMap){
             mapType = viewModel.mapType
             val zoom = 12.0f
-            lat = viewModel.getLat
-            lon  = viewModel.getLng
+            lat = viewModel.getLat.toDouble()
+            lon  = viewModel.getLng.toDouble()
             mLatLng = LatLng(lat, lon)
             mLatLng.let {
                 mMarker = addMarker(
@@ -159,18 +348,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
                 )
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(it, zoom))
             }
-            uiSettings.isZoomControlsEnabled = true
-            if (checkSinglePermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                mMap.isMyLocationEnabled = true;
-            }else {
-                val permList = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-                ActivityCompat.requestPermissions(
-                    this@MapActivity,
-                    permList,
-                    99
-                )
-            }
-            setPadding(0,0,0,170)
+            setPadding(0,80,0,170)
             setOnMapClickListener(this@MapActivity)
             if (viewModel.isStarted){
                 mMarker?.let {
@@ -217,6 +395,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
     }
 
 
+
+
+
+
     private fun aboutDialog(){
         alertDialog = MaterialAlertDialogBuilder(this)
         layoutInflater.inflate(R.layout.about,null).apply {
@@ -232,69 +414,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClic
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main_menu,menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-       when(item.itemId){
-            R.id.search -> searchDialog()
-            R.id.add_fav -> addFavouriteDialog()
-            R.id.get_favourite -> openFavouriteListDialog()
-            R.id.settings -> startActivity(Intent(this,SettingsActivity::class.java))
-            R.id.about -> aboutDialog()
-
-            else -> super.onOptionsItemSelected(item)
-        }
-        return true
-
-    }
 
 
-    private fun searchDialog() {
-        alertDialog = MaterialAlertDialogBuilder(this)
-        val view = layoutInflater.inflate(R.layout.dialog_layout,null)
-        val editText = view.findViewById<EditText>(R.id.search_edittxt)
-        editText.hint = getString(R.string.search_hint)
-        val progressBar = ProgressDialog(this)
-        progressBar.setMessage(getString(R.string.progress_dialog_searching))
-        alertDialog.setTitle(getString(R.string.search))
-        alertDialog.setView(view)
-        alertDialog.setPositiveButton(getString(R.string.search)) { _, _ ->
-            if (isNetworkConnected()){
-                lifecycleScope.launch(Dispatchers.Main) {
-                    val  getInput = editText.text.toString()
-                    if (getInput.isNotEmpty()){
-                        getSearchAddress(getInput).let {
-                            it.collect { result ->
-                                when(result) {
-                                    is SearchProgress.Progress -> {
-                                        progressBar.show()
-                                    }
-                                    is SearchProgress.Complete -> {
-                                        lat = result.lat
-                                        lon = result.lon
-                                        progressBar.dismiss()
-                                        moveMapToNewLocation(true)
-                                    }
 
-                                    is SearchProgress.Fail -> {
-                                        progressBar.dismiss()
-                                        showToast(result.error!!)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                showToast(getString(R.string.no_internet))
-            }
-        }
-        alertDialog.show()
 
-    }
 
     private fun addFavouriteDialog(){
         alertDialog =  MaterialAlertDialogBuilder(this).apply {
