@@ -29,7 +29,7 @@ class App : ModuleApplication() {
         gsApp = this
         commonInit()
         MonetCompat.enablePaletteCompat()
-        AppCompatDelegate.setDefaultNightMode(PrefManager.darkTheme.value)
+        AppCompatDelegate.setDefaultNightMode(PrefManager.darkTheme)
 
     }
 

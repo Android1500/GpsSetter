@@ -108,7 +108,6 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         updateChecker()
         setBottomSheet()
         setUpNavigationView()
-        setFloatActionButton()
         setupMonet()
         setupButton()
         setDrawer()
@@ -143,6 +142,42 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
                 e.message
             }
         }
+
+        if (viewModel.isStarted) {
+            binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
+            binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
+        }
+
+        binding.bottomSheetContainer.startSpoofing.setOnClickListener {
+            viewModel.update(true, lat, lon)
+            mLatLng.let {
+                mMarker?.position = it!!
+            }
+            mMarker?.isVisible = true
+            binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
+            binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
+            lifecycleScope.launch {
+                mLatLng?.getAddress(this@MapActivity)?.let { address ->
+                    address.collect{ value ->
+                        showStartNotification(value)
+                    }
+                }
+            }
+            showToast(getString(R.string.location_set))
+        }
+        binding.bottomSheetContainer.stopButton.setOnClickListener {
+            mLatLng.let {
+                viewModel.update(false, it!!.latitude, it.longitude)
+            }
+            mMarker?.isVisible = false
+            binding.bottomSheetContainer.stopButton.visibility = View.GONE
+            binding.bottomSheetContainer.startSpoofing.visibility = View.VISIBLE
+            cancelNotification()
+            showToast(getString(R.string.location_unset))
+        }
+
+
+
 
     }
 
@@ -291,45 +326,6 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
 
     }
 
-    private fun setFloatActionButton() {
-        if (viewModel.isStarted) {
-            binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
-            binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
-        }
-
-        binding.bottomSheetContainer.startSpoofing.setOnClickListener {
-            viewModel.update(true, lat, lon)
-            mLatLng.let {
-                mMarker?.position = it!!
-            }
-            mMarker?.isVisible = true
-            binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
-            binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
-            lifecycleScope.launch {
-                mLatLng?.getAddress(this@MapActivity)?.let { address ->
-                    address.collect{ value ->
-                        showStartNotification(value)
-                    }
-                }
-            }
-            showToast(getString(R.string.location_set))
-        }
-        binding.bottomSheetContainer.stopButton.setOnClickListener {
-            mLatLng.let {
-                viewModel.update(false, it!!.latitude, it.longitude)
-            }
-            mMarker?.isVisible = false
-            binding.bottomSheetContainer.stopButton.visibility = View.GONE
-            binding.bottomSheetContainer.startSpoofing.visibility = View.VISIBLE
-            cancelNotification()
-            showToast(getString(R.string.location_unset))
-        }
-    }
-
-
-
-
-
 
 
     @SuppressLint("MissingPermission")
@@ -338,8 +334,8 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         with(mMap){
             mapType = viewModel.mapType
             val zoom = 12.0f
-            lat = viewModel.getLat.toDouble()
-            lon  = viewModel.getLng.toDouble()
+            lat = viewModel.getLat
+            lon  = viewModel.getLng
             mLatLng = LatLng(lat, lon)
             mLatLng.let {
                 mMarker = addMarker(

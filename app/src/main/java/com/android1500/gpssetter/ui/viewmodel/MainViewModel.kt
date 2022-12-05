@@ -49,10 +49,10 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
 
-    val getLat  = prefManger.getLat.value
-    val getLng  = prefManger.getLng.value
-    val isStarted = prefManger.isStarted.value
-    val mapType = prefManger.mapType.value
+    val getLat  = prefManger.getLat
+    val getLng  = prefManger.getLng
+    val isStarted = prefManger.isStarted
+    val mapType = prefManger.mapType
 
 
     private val _allFavList = MutableStateFlow<List<Favourite>>(emptyList())
