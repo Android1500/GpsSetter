@@ -270,9 +270,12 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
 
     private fun setupMonet() {
         val secondaryBackground = monet.getBackgroundColorSecondary(this)
+        val background = monet.getBackgroundColor(this)
         binding.bottomSheetContainer.search.searchBox.backgroundTintList = ColorStateList.valueOf(secondaryBackground!!)
         val root =  binding.bottomSheetContainer.root.background as GradientDrawable
         root.setColor(ColorUtils.setAlphaComponent(headerBackground,235))
+        binding.getlocationContainer.backgroundTintList = ColorStateList.valueOf(background)
+        binding.favourite.backgroundTintList = ColorStateList.valueOf(background)
 
     }
 
