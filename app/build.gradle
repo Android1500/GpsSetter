@@ -55,6 +55,7 @@ dependencies {
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
     implementation "androidx.drawerlayout:drawerlayout:1.2.0-alpha01"
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
 
 
     testImplementation 'junit:junit:4.13.2'

@@ -5,19 +5,14 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.gsApp
-import com.android1500.gpssetter.selfhook.XposedSelfHooks
-import com.highcapable.yukihookapi.hook.xposed.prefs.data.PrefsData
-import dagger.Reusable
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import rikka.material.app.DayNightDelegate
-import java.io.File
 
 
 @SuppressLint("WorldReadableFiles")
-
 object PrefManager   {
 
     private const val START = "start"
@@ -91,26 +86,12 @@ object PrefManager   {
             prefEditor.putFloat(LONGITUDE, ln.toFloat())
             prefEditor.putBoolean(START, start)
             prefEditor.apply()
-            makeWorldReadable()
         }
 
     }
 
 
-    /**
-     *  Make the redirected prefs file world readable ourselves - fixes a bug in Ed/lsposed
-     *
-     *  This requires the XSharedPreferences file path, which we get via a self hook. It does nothing
-     *  when the Xposed module is not enabled.
-     */
-    @SuppressLint("SetWorldReadable")
-    private fun makeWorldReadable(){
-        XposedSelfHooks.getXSharedPrefsPath().let {
-            if(it.isNotEmpty()){
-                File(it).setReadable(true, false)
-            }
-        }
-    }
+
 
     @OptIn(DelicateCoroutinesApi::class)
     private fun runInBackground(method: suspend () -> Unit){

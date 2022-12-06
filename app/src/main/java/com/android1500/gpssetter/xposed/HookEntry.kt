@@ -16,6 +16,7 @@ class HookEntry : IYukiHookXposedInit {
         isEnableHookSharedPreferences = true
         isEnableModulePrefsCache = true
 
+
     }
 
 

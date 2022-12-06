@@ -8,9 +8,11 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.location.LocationRequest
+import com.android1500.gpssetter.BuildConfig
 import com.android1500.gpssetter.gsApp
 import com.android1500.gpssetter.xposed.LocationHook.hook
 import com.highcapable.yukihookapi.hook.entity.YukiBaseHooker
+import com.highcapable.yukihookapi.hook.log.loggerW
 import com.highcapable.yukihookapi.hook.type.java.BooleanType
 import com.highcapable.yukihookapi.hook.type.java.DoubleType
 import com.highcapable.yukihookapi.hook.type.java.FloatType
@@ -27,8 +29,6 @@ import kotlin.math.cos
 object LocationHook : YukiBaseHooker() {
 
 
-
-
     var newlat: Double = 40.7128
     var newlng: Double = 74.0060
     private const val pi = 3.14159265359
@@ -38,6 +38,7 @@ object LocationHook : YukiBaseHooker() {
     private val settings = Xshare()
     var mLastUpdated: Long = 0
     private const val className = "android.location.Location"
+    private val ignorePkg = arrayListOf("com.android.location.fused",BuildConfig.APPLICATION_ID)
 
     private val context by lazy { AndroidAppHelper.currentApplication() as Context }
 
@@ -65,7 +66,7 @@ object LocationHook : YukiBaseHooker() {
     override fun onHook() {
 
         loadSystem {
-            if (settings.isStarted && settings.isHookedSystem) {
+            if (settings.isStarted && (settings.isHookedSystem && !ignorePkg.contains(packageName))) {
                 if (System.currentTimeMillis() - mLastUpdated > 200){
                     updateLocation()
                 }
@@ -147,7 +148,7 @@ object LocationHook : YukiBaseHooker() {
                             try {
                                 HiddenApiBypass.invoke(location.javaClass, location, "setIsFromMockProvider", false)
                             } catch (e: Exception) {
-                                XposedBridge.log("GS: Not possible to mock (Pre Q)! $e")
+                                loggerW("LocationHook:- ","GS: Not possible to mock  $e")
                             }
                             args[0] = location
 
@@ -170,7 +171,7 @@ object LocationHook : YukiBaseHooker() {
                     if (System.currentTimeMillis() - mLastUpdated > 200){
                         updateLocation()
                     }
-                    if (settings.isStarted){
+                    if (settings.isStarted && !ignorePkg.contains(packageName)){
                         result = newlat
                     }
                 }
@@ -185,7 +186,7 @@ object LocationHook : YukiBaseHooker() {
                     if (System.currentTimeMillis() - mLastUpdated > 200){
                         updateLocation()
                     }
-                    if (settings.isStarted){
+                    if (settings.isStarted && !ignorePkg.contains(packageName)){
                         result = newlng
                     }
                 }
@@ -200,7 +201,7 @@ object LocationHook : YukiBaseHooker() {
                     if (System.currentTimeMillis() - mLastUpdated > 200){
                         updateLocation()
                     }
-                    if (settings.isStarted){
+                    if (settings.isStarted && !ignorePkg.contains(packageName)){
                         result = accuracy
                     }
                 }
@@ -216,34 +217,37 @@ object LocationHook : YukiBaseHooker() {
                     if (System.currentTimeMillis() - mLastUpdated > 200){
                         updateLocation()
                     }
-                    lateinit var location: Location
-                    lateinit var originLocation: Location
-                    if (args[0] == null){
-                        location = Location(LocationManager.GPS_PROVIDER)
-                        location.time = System.currentTimeMillis() - 300
-                    }else {
-                        originLocation = args(0).any() as Location
-                        location = Location(originLocation.provider)
-                        location.time = originLocation.time
-                        location.accuracy = accuracy
-                        location.bearing = originLocation.bearing
-                        location.bearingAccuracyDegrees = originLocation.bearingAccuracyDegrees
-                        location.elapsedRealtimeNanos = originLocation.elapsedRealtimeNanos
-                        location.verticalAccuracyMeters = originLocation.verticalAccuracyMeters
-                    }
+                    if (settings.isStarted && !ignorePkg.contains(packageName)){
+                        lateinit var location: Location
+                        lateinit var originLocation: Location
+                        if (args[0] == null){
+                            location = Location(LocationManager.GPS_PROVIDER)
+                            location.time = System.currentTimeMillis() - 300
+                        }else {
+                            originLocation = args(0).any() as Location
+                            location = Location(originLocation.provider)
+                            location.time = originLocation.time
+                            location.accuracy = accuracy
+                            location.bearing = originLocation.bearing
+                            location.bearingAccuracyDegrees = originLocation.bearingAccuracyDegrees
+                            location.elapsedRealtimeNanos = originLocation.elapsedRealtimeNanos
+                            location.verticalAccuracyMeters = originLocation.verticalAccuracyMeters
+                        }
 
-                    location.latitude = newlat
-                    location.longitude = newlng
-                    location.altitude = 0.0
-                    location.speed = 0F
-                    location.speedAccuracyMetersPerSecond = 0F
-                    XposedBridge.log("GS: lat: ${location.latitude}, lon: ${location.longitude}")
-                    try {
-                        HiddenApiBypass.invoke(location.javaClass, location, "setIsFromMockProvider", false)
-                    } catch (e: Exception) {
-                        XposedBridge.log("GS: Not possible to mock (Pre Q)! $e")
+                        location.latitude = newlat
+                        location.longitude = newlng
+                        location.altitude = 0.0
+                        location.speed = 0F
+                        location.speedAccuracyMetersPerSecond = 0F
+                        XposedBridge.log("GS: lat: ${location.latitude}, lon: ${location.longitude}")
+                        try {
+                            HiddenApiBypass.invoke(location.javaClass, location, "setIsFromMockProvider", false)
+                        } catch (e: Exception) {
+                            loggerW("LocationHook:- ","GS: Not possible to mock  $e")
+                        }
+                        args[0] = location
+
                     }
-                    args[0] = location
 
                 }
             }
@@ -257,23 +261,28 @@ object LocationHook : YukiBaseHooker() {
                     param(String::class.java)
                 }
                 beforeHook {
-                    val provider = args[0] as String
-                    val location = Location(provider)
-                    location.time = System.currentTimeMillis() - 300
-                    location.latitude = newlat
-                    location.longitude = newlng
-                    location.altitude = 0.0
-                    location.speed = 0F
-                    location.speedAccuracyMetersPerSecond = 0F
-                    XposedBridge.log("GS: lat: ${location.latitude}, lon: ${location.longitude}")
-                    try {
-                        HiddenApiBypass.invoke(location.javaClass, location, "setIsFromMockProvider", false)
-                    } catch (e: Exception) {
-                        XposedBridge.log("GS: Not possible to mock (Pre Q)! $e")
+                    if (System.currentTimeMillis() - mLastUpdated > 200){
+                        updateLocation()
                     }
-                    XposedBridge.log("provider --> $provider")
-                    result = location
+                    if (settings.isStarted && !ignorePkg.contains(packageName)) {
+                        val provider = args[0] as String
+                        val location = Location(provider)
+                        location.time = System.currentTimeMillis() - 300
+                        location.latitude = newlat
+                        location.longitude = newlng
+                        location.altitude = 0.0
+                        location.speed = 0F
+                        location.speedAccuracyMetersPerSecond = 0F
+                        XposedBridge.log("GS: lat: ${location.latitude}, lon: ${location.longitude}")
+                        try {
+                            HiddenApiBypass.invoke(location.javaClass, location, "setIsFromMockProvider", false)
+                        } catch (e: Exception) {
+                            XposedBridge.log("GS: Not possible to mock (Pre Q)! $e")
+                        }
+                        result = location
 
+
+                    }
 
                 }
             }

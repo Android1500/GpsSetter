@@ -1,16 +1,14 @@
 package com.android1500.gpssetter.ui
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.ProgressDialog
-import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.location.Address
 import android.location.Geocoder
-import android.location.LocationManager
+import android.location.Location
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
@@ -22,7 +20,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.GravityCompat
@@ -39,6 +36,9 @@ import com.android1500.gpssetter.databinding.ActivityMapBinding
 import com.android1500.gpssetter.ui.viewmodel.MainViewModel
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.utils.ext.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -47,8 +47,10 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.tasks.CancellationToken
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.gms.tasks.OnTokenCanceledListener
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.elevation.ElevationOverlayProvider
 import com.google.android.material.progressindicator.LinearProgressIndicator
@@ -79,6 +81,8 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
     private var xposedDialog: AlertDialog? = null
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
 
     private val elevationOverlayProvider by lazy {
         ElevationOverlayProvider(this)
@@ -90,9 +94,6 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         )
     }
     override val applyBackgroundColorToWindow = true
-
-
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -123,24 +124,24 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
             addFavouriteDialog()
         }
         binding.getlocationContainer.setOnClickListener {
-            try {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-                if (checkSinglePermission(Manifest.permission.ACCESS_FINE_LOCATION)){
-                    val locationManager =
-                        getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                    val location =
-                        locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                    location?.let {
-                        lat = it.latitude
-                        lon = it.longitude
+            fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, object : CancellationToken() {
+                override fun onCanceledRequested(p0: OnTokenCanceledListener) = CancellationTokenSource().token
+
+                override fun isCancellationRequested() = false
+            })
+                .addOnSuccessListener { location: Location? ->
+                    if (location == null)
+                        Toast.makeText(this, "Cannot get location.", Toast.LENGTH_SHORT).show()
+                    else {
+                        lat = location.latitude
+                        lon = location.longitude
                         moveMapToNewLocation(true)
                     }
 
-
                 }
-            }catch (e : Exception){
-                e.message
-            }
+
         }
 
         if (viewModel.isStarted) {
@@ -176,12 +177,9 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
             showToast(getString(R.string.location_unset))
         }
 
-
-
-
     }
 
-    private fun setDrawer(){
+    private fun setDrawer() {
         supportActionBar?.setDisplayShowTitleEnabled(false)
        val mDrawerToggle = object : ActionBarDrawerToggle(
             this,
@@ -206,7 +204,6 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
 
     private fun setBottomSheet(){
 
-
         val progressBar = ProgressDialog(this)
         progressBar.setMessage(getString(R.string.progress_dialog_searching))
         val bottom = BottomSheetBehavior.from(binding.bottomSheetContainer.bottomSheet)
@@ -214,9 +211,9 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
 
             search.searchBox.setOnEditorActionListener { v, actionId, _ ->
 
-                if (actionId == EditorInfo.IME_ACTION_SEARCH){
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
 
-                    if (isNetworkConnected()){
+                    if (isNetworkConnected()) {
                         lifecycleScope.launch(Dispatchers.Main) {
                             val  getInput = v.text.toString()
                             if (getInput.isNotEmpty()){
@@ -257,13 +254,10 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
 
             val topInset: Int = insets.systemWindowInsetTop
             val bottomInset: Int = insets.systemWindowInsetBottom
-
             bottom.peekHeight = binding.bottomSheetContainer.searchLayout.measuredHeight + bottomInset
-
 
             val searchParams = binding.bottomSheetContainer.searchLayout.layoutParams as MarginLayoutParams
             searchParams.bottomMargin  = bottomInset + searchParams.bottomMargin
-
             binding.navView.setPadding(0,topInset,0,0)
 
             insets.consumeSystemWindowInsets()
@@ -328,7 +322,6 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
 
 
 
-    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         with(mMap){
@@ -392,9 +385,6 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
 
 
 
-
-
-
     private fun aboutDialog(){
         alertDialog = MaterialAlertDialogBuilder(this)
         layoutInflater.inflate(R.layout.about,null).apply {
@@ -409,9 +399,6 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
             alertDialog.show()
         }
     }
-
-
-
 
 
 

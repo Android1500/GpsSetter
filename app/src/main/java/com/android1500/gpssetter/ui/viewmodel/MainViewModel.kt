@@ -23,10 +23,8 @@ import com.android1500.gpssetter.utils.ext.onMain
 import com.android1500.gpssetter.repository.FavouriteRepository
 import com.android1500.gpssetter.utils.PrefManager
 import com.android1500.gpssetter.room.Favourite
-import com.android1500.gpssetter.selfhook.XposedSelfHooks
 import com.android1500.gpssetter.update.UpdateChecker
 import com.highcapable.yukihookapi.YukiHookAPI
-import com.highcapable.yukihookapi.hook.xposed.proxy.IYukiHookXposedInit
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
