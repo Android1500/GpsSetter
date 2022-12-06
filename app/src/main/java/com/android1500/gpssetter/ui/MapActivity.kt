@@ -106,6 +106,7 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         setSupportActionBar(binding.toolbar)
         initializeMap()
         isModuleEnable()
+        checkLocationPermission()
         updateChecker()
         setBottomSheet()
         setUpNavigationView()
