@@ -8,7 +8,7 @@ plugins {
     id 'com.google.devtools.ksp' version '1.8.0-1.0.8'
 }
 
-def tagName = 'v1.3.0'
+def tagName = 'v1.3.0-beta'
 
 android {
     compileSdk 33
@@ -48,7 +48,7 @@ dependencies {
 
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.7.0-alpha01'
-    implementation 'com.google.android.material:material:1.8.0-rc01'
+    implementation 'com.google.android.material:material:1.9.0-alpha01'
     implementation 'androidx.activity:activity-ktx:1.6.1'
     implementation 'com.google.android.gms:play-services-maps:18.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha05'
