@@ -43,7 +43,7 @@
             android:insetRight="0dp"
             android:insetBottom="0dp"
             app:backgroundTint="@color/background"
-            app:icon="@drawable/ic_baseline_favorite_border_24"
+            app:icon="@drawable/ic_baseline_favourite"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
             app:iconSize="24dp" />

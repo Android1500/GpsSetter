@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/search_container"
@@ -27,18 +27,15 @@
         android:paddingStart="@dimen/padding_16"
         android:paddingEnd="52dp" />
 
-    <ImageView
-        android:id="@+id/search_clear"
-        android:layout_width="@dimen/clear_button_size"
-        android:layout_height="@dimen/clear_button_size"
-        android:layout_gravity="end|center_vertical"
+    <ProgressBar
+        android:id="@+id/search_progress"
+        android:layout_width="@dimen/progressbar_size"
+        android:layout_height="@dimen/progressbar_size"
         android:layout_marginEnd="24dp"
-        android:clickable="true"
-        android:focusable="true"
         android:visibility="gone"
         tools:visibility="visible"
-        android:foreground="@drawable/rounded_ripple_36"
-        android:padding="@dimen/padding_8"
-        android:src="@drawable/ic_baseline_search_24" />
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:padding="@dimen/padding_8" />
 
-</FrameLayout>
+</RelativeLayout>

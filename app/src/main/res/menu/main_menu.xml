@@ -9,7 +9,7 @@
         android:id="@+id/get_favourite"
         android:title="@string/favourites"
         app:showAsAction="always"
-        android:icon="@drawable/ic_baseline_favorite_border_24"/>
+        android:icon="@drawable/ic_outline_favourite_list"/>
 
     <item
         android:id="@+id/settings"

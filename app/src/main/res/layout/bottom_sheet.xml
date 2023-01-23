@@ -38,6 +38,7 @@
                 android:text="@string/current_address"
                 android:textColor="@color/background_dark"
                 android:textSize="12sp" />
+
         </com.facebook.shimmer.ShimmerFrameLayout>
 
 

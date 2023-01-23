@@ -1,15 +1,20 @@
 package com.android1500.gpssetter.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Notification
-import android.app.ProgressDialog
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
+import android.os.Looper
+import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.inputmethod.EditorInfo
@@ -20,10 +25,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.ColorUtils
-import androidx.core.view.GravityCompat
-import androidx.core.view.WindowCompat
+import androidx.core.view.*
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -36,9 +41,7 @@ import com.android1500.gpssetter.databinding.ActivityMapBinding
 import com.android1500.gpssetter.ui.viewmodel.MainViewModel
 import com.android1500.gpssetter.utils.NotificationsChannel
 import com.android1500.gpssetter.utils.ext.*
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -82,6 +85,8 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
     private lateinit var alertDialog: MaterialAlertDialogBuilder
     private lateinit var dialog: AlertDialog
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val PERMISSION_ID = 42
+
 
 
     private val elevationOverlayProvider by lazy {
@@ -106,15 +111,12 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         setSupportActionBar(binding.toolbar)
         initializeMap()
         isModuleEnable()
-        checkLocationPermission()
         updateChecker()
         setBottomSheet()
         setUpNavigationView()
         setupMonet()
         setupButton()
         setDrawer()
-
-
 
     }
 
@@ -125,24 +127,7 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
             addFavouriteDialog()
         }
         binding.getlocationContainer.setOnClickListener {
-            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-            fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, object : CancellationToken() {
-                override fun onCanceledRequested(p0: OnTokenCanceledListener) = CancellationTokenSource().token
-
-                override fun isCancellationRequested() = false
-            })
-                .addOnSuccessListener { location: Location? ->
-                    if (location == null)
-                        Toast.makeText(this, "Cannot get location.", Toast.LENGTH_SHORT).show()
-                    else {
-                        lat = location.latitude
-                        lon = location.longitude
-                        moveMapToNewLocation(true)
-                    }
-
-                }
-
+            getLastLocation()
         }
 
         if (viewModel.isStarted) {
@@ -204,9 +189,8 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
     }
 
     private fun setBottomSheet(){
+        //val progress = binding.bottomSheetContainer.search.searchProgress
 
-        val progressBar = ProgressDialog(this)
-        progressBar.setMessage(getString(R.string.progress_dialog_searching))
         val bottom = BottomSheetBehavior.from(binding.bottomSheetContainer.bottomSheet)
         with(binding.bottomSheetContainer){
 
@@ -222,17 +206,15 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
                                     it.collect { result ->
                                         when(result) {
                                             is SearchProgress.Progress -> {
-                                                progressBar.show()
+                                               // progress.visibility = View.VISIBLE
                                             }
                                             is SearchProgress.Complete -> {
                                                 lat = result.lat
                                                 lon = result.lon
-                                                progressBar.dismiss()
                                                 moveMapToNewLocation(true)
                                             }
 
                                             is SearchProgress.Fail -> {
-                                                progressBar.dismiss()
                                                 showToast(result.error!!)
                                             }
                                         }
@@ -251,7 +233,10 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         }
 
 
-        binding.mapContainer.map.setOnApplyWindowInsetsListener { v, insets ->
+
+
+
+        binding.mapContainer.map.setOnApplyWindowInsetsListener { _, insets ->
 
             val topInset: Int = insets.systemWindowInsetTop
             val bottomInset: Int = insets.systemWindowInsetBottom
@@ -586,6 +571,97 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
     private fun cancelNotification(){
         notificationsChannel.cancelAllNotifications(this)
     }
+
+
+    // Get current location
+    @SuppressLint("MissingPermission")
+    private fun getLastLocation() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        if (checkPermissions()) {
+            if (isLocationEnabled()) {
+                fusedLocationClient.lastLocation.addOnCompleteListener(this) { task ->
+                    val location: Location? = task.result
+                    if (location == null) {
+                        requestNewLocationData()
+                    } else {
+                        lat = location.latitude
+                        lon = location.longitude
+                        moveMapToNewLocation(true)
+                    }
+                }
+            } else {
+                showToast("Turn on location")
+                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                startActivity(intent)
+            }
+        } else {
+            requestPermissions()
+        }
+    }
+
+
+    @SuppressLint("MissingPermission")
+    private fun requestNewLocationData() {
+        val mLocationRequest = LocationRequest()
+        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        mLocationRequest.interval = 0
+        mLocationRequest.fastestInterval = 0
+        mLocationRequest.numUpdates = 1
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient.requestLocationUpdates(
+            mLocationRequest, mLocationCallback,
+            Looper.myLooper()
+        )
+    }
+
+    private val mLocationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            val mLastLocation: Location = locationResult.lastLocation!!
+            lat = mLastLocation.latitude
+            lon = mLastLocation.longitude
+        }
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val locationManager: LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
+            LocationManager.NETWORK_PROVIDER
+        )
+    }
+
+    private fun checkPermissions(): Boolean {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        ) {
+            return true
+        }
+        return false
+    }
+
+    private fun requestPermissions() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
+            PERMISSION_ID
+        )
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+            getLastLocation()
+        }
+    }
+
+
+
+
 
 
 }

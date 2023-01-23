@@ -10,7 +10,7 @@
     <dimen name="item_app_height">56dp</dimen>
     <dimen name="search_box_height">48dp</dimen>
     <dimen name="search_box_corners">24dp</dimen>
-    <dimen name="clear_button_size">36dp</dimen>
+    <dimen name="progressbar_size">36dp</dimen>
     <dimen name="bottom_sheet_elevation">1dp</dimen>
 
 
