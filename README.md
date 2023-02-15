@@ -58,5 +58,9 @@ This Module will Support Android 8.1 +
 
 As you know this project does not have advertising anymore so it's hard to alive this project if you want to support further development of this project you can donate by BTC. This form of support is meant to compensate for my time dedicated to the community.
 
-12eai5UkUtBe1gzNYvBvjTNTDvqVBFbQzy
+You can support the project by donating to below addresses.
+| Type  | Address |
+| ------------- | ------------- |
+| <img src="https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" alt="Bitcoin" width="50"/>  | 12eai5UkUtBe1gzNYvBvjTNTDvqVBFbQzy  |
+
 
