@@ -31,6 +31,14 @@
             android:defaultValue="false"/>
 
 
+        <Preference
+            android:title="Add Joystick"
+            android:key="isJoyStickEnable"
+            android:icon="@drawable/outline_joystick"
+            android:summary="%s"
+            android:defaultValue="false"/>
+
+
 
     </PreferenceCategory>
 

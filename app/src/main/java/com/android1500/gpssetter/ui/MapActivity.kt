@@ -39,7 +39,9 @@ import com.android1500.gpssetter.R
 import com.android1500.gpssetter.adapter.FavListAdapter
 import com.android1500.gpssetter.databinding.ActivityMapBinding
 import com.android1500.gpssetter.ui.viewmodel.MainViewModel
+import com.android1500.gpssetter.utils.JoystickService
 import com.android1500.gpssetter.utils.NotificationsChannel
+import com.android1500.gpssetter.utils.PrefManager
 import com.android1500.gpssetter.utils.ext.*
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -50,9 +52,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.tasks.CancellationToken
-import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.gms.tasks.OnTokenCanceledListener
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.elevation.ElevationOverlayProvider
@@ -117,6 +116,9 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         setupMonet()
         setupButton()
         setDrawer()
+        if (PrefManager.isJoyStickEnable){
+            startService(Intent(this, JoystickService::class.java))
+        }
 
     }
 
