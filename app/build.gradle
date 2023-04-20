@@ -93,8 +93,8 @@ dependencies {
         //exclude group: "androidx.lifecycle", module: "lifecycle-viewmodel-ktx"
     }
 
-    implementation 'com.highcapable.yukihookapi:api:1.1.6'
-    ksp 'com.highcapable.yukihookapi:ksp-xposed:1.1.6'
+    implementation 'com.highcapable.yukihookapi:api:1.1.10'
+    ksp 'com.highcapable.yukihookapi:ksp-xposed:1.1.10'
     implementation 'com.facebook.shimmer:shimmer:0.5.0'
     implementation 'com.github.KieronQuinn:MonetCompat:0.4.1'
     implementation 'androidx.palette:palette:1.0.0'
