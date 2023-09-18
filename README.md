@@ -7,6 +7,15 @@
 [![GitHub issues](https://img.shields.io/github/issues/Android1500/GpsSetter)](https://github.com/Android1500/GpsSetter/issues)
 [![GitHub license](https://img.shields.io/github/license/Android1500/GpsSetter)](https://github.com/Android1500/GpsSetter/blob/master/LICENSE)
 
+### ⚠️ Copyright Notice
+
+What we hate most about is the modification of our texts, code which absolutely means they want others to think all the work is done by THEM instead of others, though they actually helped NOTHING with the module development.
+
+We hate someone use our effort and do their modification and sell them without our permission which is wrong.
+
+
+Although our project was open source before, we didn't set up a license, so **ALL COPYRIGHTS RESERVED**. And from now on we decline ANY modification or pre-patched apk.  but you should not release your patched apk anywhere or sell.
+
 
 ![](https://github.com/Xposed-Modules-Repo/com.android1500.gpssetter/blob/main/banner.png) 
 
