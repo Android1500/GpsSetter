@@ -11,7 +11,7 @@
 
 What we hate most about is the modification of our texts, code which absolutely means they want others to think all the work is done by THEM instead of others, though they actually helped NOTHING with the module development.
 
-We hate someone use our effort and do their modification and sell them without our permission which is wrong.
+We also hate someone use our effort and do their modification and sell them without our permission which is wrong.
 
 
 Although our project was open source before, we didn't set up a license, so **ALL COPYRIGHTS RESERVED**. And from now on we decline ANY modification or pre-patched apk.  but you should not release your patched apk anywhere or sell.
