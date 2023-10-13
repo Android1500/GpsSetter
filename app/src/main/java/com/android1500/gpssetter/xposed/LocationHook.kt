@@ -26,6 +26,8 @@ import timber.log.Timber
 import java.util.*
 import kotlin.math.cos
 
+import kotlin.math.round
+
 object LocationHook : YukiBaseHooker() {
 
 
@@ -53,6 +55,11 @@ object LocationHook : YukiBaseHooker() {
             val dlng = y / (earth * cos(pi * settings.getLat / 180.0))
             newlat = if (settings.isRandomPosition) settings.getLat + (dlat * 180.0 / pi) else settings.getLat
             newlng = if (settings.isRandomPosition) settings.getLng + (dlng * 180.0 / pi) else settings.getLng
+            
+            newlat = Math.round(newlat * 10000000.0) / 10000000.0
+            newlng = Math.round(newlng * 10000000.0) / 10000000.0
+
+            
             accuracy = settings.accuracy!!.toFloat()
 
         }catch (e: Exception) {
