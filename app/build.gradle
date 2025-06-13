@@ -100,7 +100,7 @@ dependencies {
     implementation 'androidx.palette:palette:1.0.0'
 
 
-    implementation 'io.github.controlwear:virtualjoystick:1.10.1'
+    implementation 'com.github.controlwear:virtual-joystick-android:1.10.1'
 
 
 
