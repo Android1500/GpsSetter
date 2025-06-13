@@ -29,6 +29,9 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
 
+      - name: Create empty local.properties
+        run: touch local.properties # Creates an empty file in the project root
+
       - name: Extract version name
         id: extract_version_name
         run: echo "VERSION_NAME=$(grep 'versionName ' app/build.gradle | sed -n 's/.*versionName "\(.*\)".*/\1/p')" >> $GITHUB_OUTPUT
