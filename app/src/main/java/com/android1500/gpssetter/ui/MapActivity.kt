@@ -21,6 +21,8 @@ import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
@@ -61,11 +63,14 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.IOException
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.properties.Delegates
-
+import kotlin.random.Random
+import com.android1500.gpssetter.room.Favourite // Assuming FavData is similar to Favourite for structure
 
 @AndroidEntryPoint
 class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapClickListener {
@@ -86,6 +91,10 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val PERMISSION_ID = 42
 
+    private lateinit var exportFavoritesLauncher: ActivityResultLauncher<Intent>
+    private lateinit var importFavoritesLauncher: ActivityResultLauncher<Intent>
+
+    private var randomPositioningJob: Job? = null
 
 
     private val elevationOverlayProvider by lazy {
@@ -116,6 +125,58 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         setupMonet()
         setupButton()
         setDrawer()
+
+        exportFavoritesLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    try {
+                        val favList = viewModel.allFavList.value
+                        try {
+                            val jsonString = favoritesToJson(favList)
+                            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                                outputStream.write(jsonString.toByteArray())
+                                showToast(getString(R.string.export_successful))
+                            } ?: throw IOException("Failed to open output stream for URI: $uri")
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            showToast(getString(R.string.export_failed) + ": ${e.message}")
+                        }
+                    } ?: showToast(getString(R.string.export_failed_no_uri))
+            }
+        }
+
+        importFavoritesLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    try {
+                        contentResolver.openInputStream(uri)?.use { inputStream ->
+                            val jsonString = inputStream.bufferedReader().use { it.readText() }
+                            val importedFavorites = jsonToImportableFavorites(jsonString)
+                            var importedCount = 0
+                            if (importedFavorites.isNotEmpty()) {
+                                importedFavorites.forEach { fav ->
+                                    viewModel.storeFavorite(fav.name, fav.latitude, fav.longitude)
+                                    importedCount++
+                                }
+                                showToast(getString(R.string.import_successful_count, importedCount))
+                                if (dialog.isShowing && favListAdapter != null) {
+                                    viewModel.doGetUserDetails() // Refresh list
+                                }
+                            } else {
+                                showToast(getString(R.string.no_valid_favorites_in_file))
+                            }
+                        } ?: throw IOException("Failed to open input stream for URI: $uri")
+                    } catch (e: JSONException) {
+                        e.printStackTrace()
+                        showToast(getString(R.string.invalid_file_format) + ": ${e.message}")
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        showToast(getString(R.string.import_failed_generic, e.message ?: "Unknown error"))
+                    }
+                } ?: showToast(getString(R.string.import_failed_no_uri))
+            }
+        }
+
         if (PrefManager.isJoyStickEnable){
             startService(Intent(this, JoystickService::class.java))
         }
@@ -138,25 +199,37 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         }
 
         binding.bottomSheetContainer.startSpoofing.setOnClickListener {
-            viewModel.update(true, lat, lon)
-            mLatLng.let {
-                mMarker?.position = it!!
-            }
-            mMarker?.isVisible = true
-            binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
-            binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
-            lifecycleScope.launch {
-                mLatLng?.getAddress(this@MapActivity)?.let { address ->
-                    address.collect{ value ->
-                        showStartNotification(value)
+            if (PrefManager.isRandomPositioningEnabled) {
+                startRandomPositioningLogic()
+            } else {
+                viewModel.update(true, lat, lon)
+                mLatLng.let {
+                    mMarker?.position = it!!
+                }
+                mMarker?.isVisible = true
+                binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
+                binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
+                lifecycleScope.launch {
+                    mLatLng?.getAddress(this@MapActivity)?.let { address ->
+                        address.collect { value ->
+                            showStartNotification(value)
+                        }
                     }
                 }
+                showToast(getString(R.string.location_set))
             }
-            showToast(getString(R.string.location_set))
         }
         binding.bottomSheetContainer.stopButton.setOnClickListener {
-            mLatLng.let {
-                viewModel.update(false, it!!.latitude, it.longitude)
+            // Stop random positioning if it's active
+            if (PrefManager.isRandomPositioningEnabled) {
+                PrefManager.isRandomPositioningEnabled = false
+                binding.bottomSheetContainer.randomPositionSwitch.isChecked = false
+                stopRandomPositioningLogic() //This will also show a toast "Random positioning stopped."
+            }
+
+            // Proceed with normal stop spoofing logic
+            mLatLng?.let {
+                viewModel.update(false, it.latitude, it.longitude)
             }
             mMarker?.isVisible = false
             binding.bottomSheetContainer.stopButton.visibility = View.GONE
@@ -194,7 +267,58 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         //val progress = binding.bottomSheetContainer.search.searchProgress
 
         val bottom = BottomSheetBehavior.from(binding.bottomSheetContainer.bottomSheet)
-        with(binding.bottomSheetContainer){
+        with(binding.bottomSheetContainer){ // Accessing views from BottomSheetBinding
+
+            // Load initial values for Random Positioning
+            randomPositionSwitch.isChecked = PrefManager.isRandomPositioningEnabled
+            randomTimeIntervalEdittext.setText(PrefManager.randomTimeIntervalSeconds.toString())
+            randomDistanceRadiusEdittext.setText(PrefManager.randomDistanceRadiusMeters.toString())
+
+            // Set listeners for Random Positioning
+            randomPositionSwitch.setOnCheckedChangeListener { _, isChecked ->
+                PrefManager.isRandomPositioningEnabled = isChecked
+                if (isChecked) {
+                    startRandomPositioningLogic()
+                } else {
+                    stopRandomPositioningLogic()
+                }
+            }
+
+            randomTimeIntervalEdittext.setOnFocusChangeListener { _, hasFocus ->
+                if (!hasFocus) {
+                    val text = randomTimeIntervalEdittext.text.toString()
+                    try {
+                        val interval = text.toInt()
+                        if (interval > 0) {
+                            PrefManager.randomTimeIntervalSeconds = interval
+                        } else {
+                            randomTimeIntervalEdittext.error = getString(R.string.invalid_input_positive_number)
+                        }
+                    } catch (e: NumberFormatException) {
+                        randomTimeIntervalEdittext.error = getString(R.string.invalid_input_positive_number)
+                    }
+                } else {
+                    randomTimeIntervalEdittext.error = null // Clear error when editing starts
+                }
+            }
+
+            randomDistanceRadiusEdittext.setOnFocusChangeListener { _, hasFocus ->
+                if (!hasFocus) {
+                    val text = randomDistanceRadiusEdittext.text.toString()
+                    try {
+                        val radius = text.toFloat()
+                        if (radius > 0) {
+                            PrefManager.randomDistanceRadiusMeters = radius
+                        } else {
+                            randomDistanceRadiusEdittext.error = getString(R.string.invalid_input_positive_number)
+                        }
+                    } catch (e: NumberFormatException) {
+                        randomDistanceRadiusEdittext.error = getString(R.string.invalid_input_positive_number)
+                    }
+                } else {
+                    randomDistanceRadiusEdittext.error = null // Clear error when editing starts
+                }
+            }
 
             search.searchBox.setOnEditorActionListener { v, actionId, _ ->
 
@@ -281,6 +405,12 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
                 R.id.about -> {
                     aboutDialog()
                 }
+                R.id.action_export_favorites -> {
+                    exportFavorites()
+                }
+                R.id.action_import_favorites -> {
+                    importFavorites()
+                }
             }
             binding.container.closeDrawer(GravityCompat.START)
             true
@@ -330,6 +460,7 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
             }
             setPadding(0,80,0,170)
             setOnMapClickListener(this@MapActivity)
+            setMaxZoomPreference(22.0f) // Increased max zoom level
             if (viewModel.isStarted){
                 mMarker?.let {
                     it.isVisible = true
@@ -349,6 +480,10 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
                 lat = it.latitude
                 lon = it.longitude
             }
+        }
+        // If random positioning is active, update its center point
+        if (PrefManager.isRandomPositioningEnabled && randomPositioningJob?.isActive == true) {
+            startRandomPositioningLogic() // Re-start with new mLatLng as center
         }
     }
 
@@ -452,6 +587,192 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
                 }
             }
         }
+
+    private fun exportFavorites() {
+        // Check if there are any favorites to export
+        if (viewModel.allFavList.value.isEmpty()) {
+            showToast(getString(R.string.no_favorites_to_export))
+            return
+        }
+
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, "gps_setter_favorites.json")
+        }
+        exportFavoritesLauncher.launch(intent)
+    }
+
+    private fun importFavorites() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+        }
+        importFavoritesLauncher.launch(intent)
+    }
+
+    // Data class for temporarily holding imported favorite data
+    internal data class ImportableFavData(val name: String, val latitude: Double, val longitude: Double)
+
+    companion object {
+        // Make internal for testing, accessible via MapActivity.generateRandomLocation
+        internal fun generateRandomLocation(center: LatLng, radiusMeters: Float): LatLng {
+            val random = Random.Default
+            val radiusInDegrees = radiusMeters / 111111.0 // Approximate conversion
+            // Random distance and angle
+            val u = random.nextDouble()
+            val v = random.nextDouble()
+            val w = radiusInDegrees * StrictMath.sqrt(u)
+            val t = 2 * Math.PI * v
+            // Compute offsets
+            val x = w * StrictMath.cos(t)
+            val y = w * StrictMath.sin(t) / StrictMath.cos(Math.toRadians(center.latitude)) // Adjust for longitude scaling
+
+            val newLat = center.latitude + x
+            val newLng = center.longitude + y
+            return LatLng(newLat, newLng)
+        }
+
+        @Throws(JSONException::class)
+        internal fun favoritesToJson(favorites: List<Favourite>): String {
+            val jsonArray = JSONArray()
+            favorites.forEach { favData ->
+                val jsonObject = JSONObject()
+                jsonObject.put("name", favData.name)
+                // Ensure lat and lng are not null; use a sensible default or skip if necessary
+                jsonObject.put("latitude", favData.lat ?: 0.0)
+                jsonObject.put("longitude", favData.lng ?: 0.0)
+                jsonArray.put(jsonObject)
+            }
+            return jsonArray.toString(2) // Indent for readability
+        }
+
+        @Throws(JSONException::class)
+        internal fun jsonToImportableFavorites(jsonString: String): List<ImportableFavData> {
+            val favoritesList = mutableListOf<ImportableFavData>()
+            val jsonArray = JSONArray(jsonString)
+            for (i in 0 until jsonArray.length()) {
+                val jsonObject = jsonArray.getJSONObject(i)
+                val name = jsonObject.optString("name")
+                // Use optDouble with fallback to NaN to check if value exists and is valid
+                val latitude = jsonObject.optDouble("latitude", Double.NaN)
+                val longitude = jsonObject.optDouble("longitude", Double.NaN)
+
+                if (name.isNotEmpty() && !latitude.isNaN() && !longitude.isNaN()) {
+                    favoritesList.add(ImportableFavData(name, latitude, longitude))
+                }
+            }
+            return favoritesList
+        }
+    }
+
+    private fun startRandomPositioningLogic() {
+            val u = random.nextDouble()
+            val v = random.nextDouble()
+            val w = radiusInDegrees * StrictMath.sqrt(u)
+            val t = 2 * Math.PI * v
+            // Compute offsets
+            val x = w * StrictMath.cos(t)
+            val y = w * StrictMath.sin(t) / StrictMath.cos(Math.toRadians(center.latitude)) // Adjust for longitude scaling
+
+            val newLat = center.latitude + x
+            val newLng = center.longitude + y
+            return LatLng(newLat, newLng)
+        }
+    }
+
+    private fun startRandomPositioningLogic() {
+        val u = random.nextDouble()
+        val v = random.nextDouble()
+        val w = radiusInDegrees * StrictMath.sqrt(u)
+        val t = 2 * Math.PI * v
+        // Compute offsets
+        val x = w * StrictMath.cos(t)
+        val y = w * StrictMath.sin(t) / StrictMath.cos(Math.toRadians(center.latitude)) // Adjust for longitude scaling
+
+        val newLat = center.latitude + x
+        val newLng = center.longitude + y
+        return LatLng(newLat, newLng)
+    }
+
+    private fun startRandomPositioningLogic() {
+        randomPositioningJob?.cancel() // Cancel any existing job
+
+        if (!PrefManager.isRandomPositioningEnabled) {
+            stopRandomPositioningLogic() // Ensure it's fully stopped if pref is false
+            return
+        }
+
+        val centerLatLng = mLatLng
+        if (centerLatLng == null || mMarker?.isVisible == false) {
+            showToast(getString(R.string.random_positioning_select_center_prompt))
+            binding.bottomSheetContainer.randomPositionSwitch.isChecked = false // Turn off switch
+            PrefManager.isRandomPositioningEnabled = false
+            return
+        }
+
+        val intervalSeconds = PrefManager.randomTimeIntervalSeconds
+        val radiusMeters = PrefManager.randomDistanceRadiusMeters
+
+        if (intervalSeconds <= 0 || radiusMeters <= 0) {
+            showToast("Please set a valid interval and radius for random positioning.")
+            binding.bottomSheetContainer.randomPositionSwitch.isChecked = false // Turn off switch
+            PrefManager.isRandomPositioningEnabled = false
+            return
+        }
+
+        randomPositioningJob = lifecycleScope.launch {
+            showToast(getString(R.string.random_positioning_started))
+            // Ensure main spoofing is active
+            if (!viewModel.isStarted) {
+                val firstRandomLatLng = Companion.generateRandomLocation(centerLatLng, radiusMeters)
+                viewModel.update(true, firstRandomLatLng.latitude, firstRandomLatLng.longitude)
+                mMarker?.position = firstRandomLatLng
+                lat = firstRandomLatLng.latitude // Update current lat/lon
+                lon = firstRandomLatLng.longitude
+                binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
+                binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
+                mMarker?.isVisible = true
+                lifecycleScope.launch {
+                    firstRandomLatLng.getAddress(this@MapActivity)?.collect{ addressValue ->
+                        showStartNotification(addressValue)
+                    }
+                }
+            }
+
+            while (isActive && PrefManager.isRandomPositioningEnabled) {
+                delay(intervalSeconds * 1000L)
+                if (!PrefManager.isRandomPositioningEnabled) break // Double check before proceeding
+
+                val newRandomLatLng = Companion.generateRandomLocation(centerLatLng, radiusMeters)
+                viewModel.update(true, newRandomLatLng.latitude, newRandomLatLng.longitude)
+                mMarker?.position = newRandomLatLng
+                lat = newRandomLatLng.latitude // Update current lat/lon for next potential center
+                lon = newRandomLatLng.longitude
+                // Optionally, show a notification or a subtle map update indication
+                 mMap.animateCamera(CameraUpdateFactory.newLatLng(newRandomLatLng), 300, null)
+            }
+        }
+        // Ensure UI reflects that spoofing is active
+        binding.bottomSheetContainer.startSpoofing.visibility = View.GONE
+        binding.bottomSheetContainer.stopButton.visibility = View.VISIBLE
+        mMarker?.isVisible = true
+    }
+
+    private fun stopRandomPositioningLogic() {
+        randomPositioningJob?.cancel()
+        randomPositioningJob = null
+        // Only show stopped toast if it was actually running or meant to run
+        if (binding.bottomSheetContainer.randomPositionSwitch.isChecked || PrefManager.isRandomPositioningEnabled) {
+             // showToast(getString(R.string.random_positioning_stopped)) // Can be noisy, consider removing or making it subtle
+        }
+        // If the main spoofing should also stop when random positioning is stopped, add here:
+        // viewModel.update(false, lat, lon)
+        // binding.bottomSheetContainer.stopButton.visibility = View.GONE
+        // binding.bottomSheetContainer.startSpoofing.visibility = View.VISIBLE
+        // cancelNotification()
+        // showToast(getString(R.string.location_unset))
+    }
 
     }
 

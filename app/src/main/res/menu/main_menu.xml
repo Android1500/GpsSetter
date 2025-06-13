@@ -23,6 +23,16 @@
         app:showAsAction="always"
         android:icon="@drawable/ic_outline_info_24"/>
 
+    <item
+        android:id="@+id/action_export_favorites"
+        android:title="@string/export_favourites"
+        app:showAsAction="always"
+        android:icon="@android:drawable/ic_menu_save"/>
 
+    <item
+        android:id="@+id/action_import_favorites"
+        android:title="@string/import_favourites"
+        app:showAsAction="always"
+        android:icon="@android:drawable/ic_menu_upload"/>
 
 </menu>
