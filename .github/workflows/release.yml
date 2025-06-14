@@ -85,6 +85,9 @@ jobs:
           echo "Listing app/build/outputs/apk/release:"
           ls -R app/build/outputs/apk/release || echo "Release directory not found or empty."
 
+      - name: Echo Proposed Tag Name
+        run: echo "Proposed tag name for release: ${{ steps.extract_version_name.outputs.VERSION_NAME }}-${{ github.run_number }}"
+
       - name: Create GitHub Release
         id: create_gh_release # Ensure this ID is unique if 'create_release' was used before
         uses: actions/create-release@v1
