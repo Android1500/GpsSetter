@@ -1,7 +1,7 @@
 name: Build and Release APK
 
 on:
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch: Allows manual triggering
   # push:
   #   tags:
   #     - 'v*.*.*' # Example: v1.0.0, v1.2.3-beta
