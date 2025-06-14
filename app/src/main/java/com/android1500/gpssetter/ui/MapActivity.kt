@@ -590,6 +590,7 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
                 }
             }
         }
+    } // This closing brace for getAllUpdatedFavList was missing or misplaced.
 
     private fun exportFavorites() {
         // Check if there are any favorites to export
@@ -751,7 +752,7 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         // showToast(getString(R.string.location_unset))
     }
 
-    }
+    // Stray brace removed from here, it was after stopRandomPositioningLogic's correct closing brace.
 
 
     private fun updateDialog(){

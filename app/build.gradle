@@ -8,6 +8,10 @@ plugins {
     id 'com.google.devtools.ksp' version '1.8.10-1.0.9'
 }
 
+kotlin {
+    jvmToolchain(11)
+}
+
 def tagName = 'v1.3.0-beta'
 
 android {
@@ -43,9 +47,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = '11'
-    }
+    // kotlinOptions block removed
     buildFeatures {
         viewBinding true
         buildConfig true
