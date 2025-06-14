@@ -34,7 +34,7 @@ jobs:
 
       - name: Extract version name
         id: extract_version_name
-        run: echo "VERSION_NAME=$(grep 'versionName ' app/build.gradle | sed -n 's/.*versionName "\(.*\)".*/\1/p')" >> $GITHUB_OUTPUT
+        run: echo "VERSION_NAME=$(./gradlew -q :app:printVersionName)" >> $GITHUB_OUTPUT
 
       - name: Extract version code
         id: extract_version_code
