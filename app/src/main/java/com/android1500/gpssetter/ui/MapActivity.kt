@@ -128,20 +128,23 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
 
         exportFavoritesLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                result.data?.data?.let { uri ->
-                    try {
+                result.data?.data?.let { uri -> // uri is non-null here
+                    try { // Single try block for all operations for this URI
                         val favList = viewModel.allFavList.value
-                        try {
+                        if (favList.isEmpty()) {
+                            showToast(getString(R.string.no_favorites_to_export))
+                        } else {
                             val jsonString = favoritesToJson(favList)
                             contentResolver.openOutputStream(uri)?.use { outputStream ->
                                 outputStream.write(jsonString.toByteArray())
                                 showToast(getString(R.string.export_successful))
-                            } ?: throw IOException("Failed to open output stream for URI: $uri")
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            showToast(getString(R.string.export_failed) + ": ${e.message}")
+                            } ?: throw IOException(getString(R.string.export_failed_no_uri) + " (OutputStream was null for $uri)")
                         }
-                    } ?: showToast(getString(R.string.export_failed_no_uri))
+                    } catch (e: Exception) { // Catch all exceptions for this URI processing
+                        e.printStackTrace()
+                        showToast(getString(R.string.export_failed) + ": ${e.message}")
+                    }
+                } ?: showToast(getString(R.string.export_failed_no_uri)) // This handles the case where result.data.data itself is null
             }
         }
 
@@ -666,34 +669,8 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
         }
     }
 
-    private fun startRandomPositioningLogic() {
-            val u = random.nextDouble()
-            val v = random.nextDouble()
-            val w = radiusInDegrees * StrictMath.sqrt(u)
-            val t = 2 * Math.PI * v
-            // Compute offsets
-            val x = w * StrictMath.cos(t)
-            val y = w * StrictMath.sin(t) / StrictMath.cos(Math.toRadians(center.latitude)) // Adjust for longitude scaling
-
-            val newLat = center.latitude + x
-            val newLng = center.longitude + y
-            return LatLng(newLat, newLng)
-        }
-    }
-
-    private fun startRandomPositioningLogic() {
-        val u = random.nextDouble()
-        val v = random.nextDouble()
-        val w = radiusInDegrees * StrictMath.sqrt(u)
-        val t = 2 * Math.PI * v
-        // Compute offsets
-        val x = w * StrictMath.cos(t)
-        val y = w * StrictMath.sin(t) / StrictMath.cos(Math.toRadians(center.latitude)) // Adjust for longitude scaling
-
-        val newLat = center.latitude + x
-        val newLng = center.longitude + y
-        return LatLng(newLat, newLng)
-    }
+    // Removed the duplicated startRandomPositioningLogic definitions here.
+    // The correct one is below this companion object.
 
     private fun startRandomPositioningLogic() {
         randomPositioningJob?.cancel() // Cancel any existing job
