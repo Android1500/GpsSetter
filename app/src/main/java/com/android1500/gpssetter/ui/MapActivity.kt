@@ -64,6 +64,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.util.regex.Matcher
@@ -642,7 +643,7 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
             val jsonArray = JSONArray()
             favorites.forEach { favData ->
                 val jsonObject = JSONObject()
-                jsonObject.put("name", favData.name)
+                jsonObject.put("address", favData.address ?: "") // Use "address" as key, matching Favourite field
                 // Ensure lat and lng are not null; use a sensible default or skip if necessary
                 jsonObject.put("latitude", favData.lat ?: 0.0)
                 jsonObject.put("longitude", favData.lng ?: 0.0)
@@ -657,12 +658,13 @@ class MapActivity :  MonetCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapC
             val jsonArray = JSONArray(jsonString)
             for (i in 0 until jsonArray.length()) {
                 val jsonObject = jsonArray.getJSONObject(i)
-                val name = jsonObject.optString("name")
+                val name = jsonObject.optString("address") // Read "address" key
                 // Use optDouble with fallback to NaN to check if value exists and is valid
                 val latitude = jsonObject.optDouble("latitude", Double.NaN)
                 val longitude = jsonObject.optDouble("longitude", Double.NaN)
 
                 if (name.isNotEmpty() && !latitude.isNaN() && !longitude.isNaN()) {
+                    // 'name' here now holds the value from the "address" field in JSON
                     favoritesList.add(ImportableFavData(name, latitude, longitude))
                 }
             }

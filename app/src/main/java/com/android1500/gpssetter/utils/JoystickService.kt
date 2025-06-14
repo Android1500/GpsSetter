@@ -9,8 +9,9 @@ import android.os.IBinder
 import android.util.Log
 import android.view.*
 import com.android1500.gpssetter.R
+// Corrected import for the new joystick library
+import com.github.lukkass222.virtualjoystick.android.JoystickView
 import com.android1500.gpssetter.utils.ext.showToast
-import io.github.controlwear.virtual.joystick.android.JoystickView
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -47,7 +48,7 @@ class JoystickService : Service(),View.OnTouchListener,View.OnClickListener {
             }
             false
         }
-        mJoystickView?.setOnMoveListener { angle, strength ->
+        mJoystickView?.setOnMoveListener { angle, strength, motionEvent -> // Added motionEvent parameter
             val radians = Math.toRadians(angle.toDouble())
             try {
                 val factorX: Double = cos(radians) / 100000.0 * (strength / 30)
