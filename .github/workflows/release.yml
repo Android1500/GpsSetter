@@ -54,6 +54,12 @@ jobs:
         env:
           MAPS_API_KEY_FROM_WORKFLOW: ${{ secrets.MAPS_API_KEY_PLACEHOLDER }}
 
+      - name: Display generated resources on failure
+        if: failure() # Only run if the previous steps (especially build) failed
+        run: |
+          echo "Attempting to display generated string resources..."
+          cat app/build/generated/res/resValues/release/values/generated.xml || echo "Generated XML for resValue not found at app/build/generated/res/resValues/release/values/generated.xml"
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1

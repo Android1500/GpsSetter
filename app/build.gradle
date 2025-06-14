@@ -26,6 +26,10 @@ android {
         // it falls back to "YOUR_DEBUG_KEY_PLACEHOLDER".
         def pobrezaApiKey = System.getenv("MAPS_API_KEY_FROM_WORKFLOW") ?: "YOUR_DEBUG_KEY_PLACEHOLDER"
         buildConfigField("String", "MAPS_API_KEY", "\"${pobrezaApiKey}\"")
+
+        // New resValue for the manifest
+        def mapsApiKeyForRes = System.getenv("MAPS_API_KEY_FROM_WORKFLOW") ?: "YOUR_DEBUG_KEY_PLACEHOLDER_RES"
+        resValue("string", "google_maps_key_for_manifest", mapsApiKeyForRes)
     }
 
 
