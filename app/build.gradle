@@ -20,6 +20,12 @@ android {
         versionName tagName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "TAG_NAME", "\"${tagName}\"")
+        // Define MAPS_API_KEY as a buildConfigField
+        // It attempts to read an environment variable named MAPS_API_KEY_FROM_WORKFLOW.
+        // If the environment variable is not set (e.g., during local builds),
+        // it falls back to "YOUR_DEBUG_KEY_PLACEHOLDER".
+        def pobrezaApiKey = System.getenv("MAPS_API_KEY_FROM_WORKFLOW") ?: "YOUR_DEBUG_KEY_PLACEHOLDER"
+        buildConfigField("String", "MAPS_API_KEY", "\"${pobrezaApiKey}\"")
     }
 
 

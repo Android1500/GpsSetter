@@ -40,10 +40,19 @@ jobs:
         id: extract_version_code
         run: echo "VERSION_CODE=$(grep 'versionCode ' app/build.gradle | sed -n 's/.*versionCode \([0-9]*\).*/\1/p')" >> $GITHUB_OUTPUT
 
+      - name: Check if MAPS_API_KEY_PLACEHOLDER is set
+        run: |
+          if [ -n "${{ secrets.MAPS_API_KEY_PLACEHOLDER }}" ]; then
+            echo "MAPS_API_KEY_PLACEHOLDER secret is set by GitHub."
+          else
+            echo "MAPS_API_KEY_PLACEHOLDER secret is NOT set by GitHub. Please ensure it is correctly named in repository settings."
+            # exit 1 # Optionally uncomment to fail if secret is not set
+          fi
+
       - name: Build release APK
         run: ./gradlew :app:assembleRelease
         env:
-          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY_PLACEHOLDER }} # User needs to set this secret in repository settings
+          MAPS_API_KEY_FROM_WORKFLOW: ${{ secrets.MAPS_API_KEY_PLACEHOLDER }}
 
       - name: Create Release
         id: create_release
