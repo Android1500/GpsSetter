@@ -49,10 +49,28 @@ jobs:
             # exit 1 # Optionally uncomment to fail if secret is not set
           fi
 
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/release.keystore
+
+      - name: Check Decoded Keystore File
+        run: |
+          echo "Checking for decoded keystore at ${{ github.workspace }}/release.keystore"
+          ls -l ${{ github.workspace }}/release.keystore
+          if [ -f "${{ github.workspace }}/release.keystore" ] && [ -s "${{ github.workspace }}/release.keystore" ]; then
+            echo "Keystore file exists at ${{ github.workspace }}/release.keystore and is not empty."
+          else
+            echo "ERROR: Keystore file does not exist at ${{ github.workspace }}/release.keystore or is empty!"
+            # Consider adding 'exit 1' here if you want the workflow to fail fast if the keystore is missing/empty.
+          fi
+
       - name: Build release APK
         run: ./gradlew :app:assembleRelease
         env:
           MAPS_API_KEY_FROM_WORKFLOW: ${{ secrets.MAPS_API_KEY_PLACEHOLDER }}
+          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Display generated resources on failure
         if: failure() # Only run if the previous steps (especially build) failed
@@ -73,16 +91,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.extract_version_name.outputs.VERSION_NAME }}
-          release_name: Release ${{ steps.extract_version_name.outputs.VERSION_NAME }}
+          tag_name: ${{ steps.extract_version_name.outputs.VERSION_NAME }}-${{ github.run_number }}
+          release_name: Release ${{ steps.extract_version_name.outputs.VERSION_NAME }} (Run #${{ github.run_number }})
           body: |
-            ## Release ${{ steps.extract_version_name.outputs.VERSION_NAME }}
+            ## Release ${{ steps.extract_version_name.outputs.VERSION_NAME }} (Run #${{ github.run_number }})
             **Build Number:** ${{ steps.extract_version_code.outputs.VERSION_CODE }}
 
             **Changelog:**
             * (Details of changes in this version - please fill in manually or automate)
           draft: false
-          prerelease: false
+          prerelease: true
 
       - name: Upload Release APK Asset
         uses: actions/upload-release-asset@v1
@@ -90,6 +108,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_gh_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-release-unsigned.apk
-          asset_name: app-release-unsigned-${{ steps.extract_version_name.outputs.VERSION_NAME }}.apk
+          asset_path: app/build/outputs/apk/release/app-release.apk
+          asset_name: app-release-${{ steps.extract_version_name.outputs.VERSION_NAME }}-${{ github.run_number }}.apk
           asset_content_type: application/vnd.android.package-archive
