@@ -57,4 +57,19 @@ This repository has been archived and no longer contains the source code.
 
 You can still download the public binary [here](https://github.com/Android1500/GpsSetter/releases).
 
-For inquiries or commercial licensing, please contact: noobdevx@gmail.com.
+## 📢 Legal Notice
+
+© 2025 Android1500. All rights reserved.
+
+This project is no longer open source.  
+All previous source code has been removed, and **no permission is granted to copy, redistribute, modify, or republish** any part of the original codebase or app.
+
+### 🚫 You are **not allowed** to:
+- Sell or publish any modified versions of this app
+- Reupload the app to any app store (Google Play, APKPure, etc.)
+- Use the name **GpsSetter** or its branding
+
+Violators will be reported and may face DMCA takedown actions.
+
+### ✅ For licensing or official use:
+Contact: `noobdevx@gmail.com`
