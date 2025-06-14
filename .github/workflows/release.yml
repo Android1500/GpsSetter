@@ -60,12 +60,21 @@ jobs:
           echo "Attempting to display generated string resources..."
           cat app/build/generated/res/resValues/release/values/generated.xml || echo "Generated XML for resValue not found at app/build/generated/res/resValues/release/values/generated.xml"
 
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - name: List APK directory contents
+        run: |
+          echo "Listing app/build/outputs/apk:"
+          ls -R app/build/outputs/apk
+          echo "Listing app/build/outputs/apk/release:"
+          ls -R app/build/outputs/apk/release || echo "Release directory not found or empty."
+
+      - name: Create GitHub Release
+        id: create_gh_release # Ensure this ID is unique if 'create_release' was used before
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.extract_version_name.outputs.VERSION_NAME }} # Prepend 'v' to version name for tag
-          name: Release v${{ steps.extract_version_name.outputs.VERSION_NAME }}
+          tag_name: v${{ steps.extract_version_name.outputs.VERSION_NAME }}
+          release_name: Release v${{ steps.extract_version_name.outputs.VERSION_NAME }}
           body: |
             ## Release v${{ steps.extract_version_name.outputs.VERSION_NAME }}
             **Build Number:** ${{ steps.extract_version_code.outputs.VERSION_CODE }}
@@ -73,7 +82,14 @@ jobs:
             **Changelog:**
             * (Details of changes in this version - please fill in manually or automate)
           draft: false
-          prerelease: false # Set to true if it's a pre-release (e.g., contains '-beta')
-          files: app/build/outputs/apk/release/app-release.apk
+          prerelease: false
+
+      - name: Upload Release APK Asset
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_gh_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/release/app-release.apk # Default assumption
+          asset_name: app-release-v${{ steps.extract_version_name.outputs.VERSION_NAME }}.apk
+          asset_content_type: application/vnd.android.package-archive
