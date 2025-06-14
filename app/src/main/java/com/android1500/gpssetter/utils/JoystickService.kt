@@ -10,7 +10,7 @@ import android.util.Log
 import android.view.*
 import com.android1500.gpssetter.R
 // Corrected import for the new joystick library
-import com.github.lukkass222.virtualjoystick.android.JoystickView
+import com.github.lukkass222.virtual_joystick_android.JoystickView
 import com.android1500.gpssetter.utils.ext.showToast
 import kotlin.math.cos
 import kotlin.math.sin
