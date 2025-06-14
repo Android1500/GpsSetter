@@ -55,7 +55,7 @@ This Module will Support Android 8.1 +
 
 This repository has been archived and no longer contains the source code.
 
-You can still download the public binary [here](https://github.com/Android1500/GpsSetter/releases).
+You can still download the release apk [here](https://github.com/Android1500/GpsSetter/releases).
 
 ## 📢 Legal Notice
 
