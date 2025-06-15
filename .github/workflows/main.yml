@@ -1,110 +1,95 @@
-name: Build and Release Signed APK
+name: Build and Release APK
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to build from'
-        required: true
-        type: string
+  workflow_dispatch: # Allows manual triggering
+  # push:
+  #   tags:
+  #     - 'v*.*.*' # Example: v1.0.0, v1.2.3-beta
 
 permissions:
-  contents: write
+  contents: write # Required to create a release and upload assets
 
 jobs:
-  build-and-release:
+  build_and_release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch }}
+        uses: actions/checkout@v3
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v3
         with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v2
 
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
 
       - name: Create empty local.properties
-        run: touch local.properties
-
-      - name: Check signing secrets
-        run: |
-          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ] || [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ] || [ -z "${{ secrets.KEY_ALIAS }}" ] || [ -z "${{ secrets.KEY_PASSWORD }}" ]; then
-            echo "ERROR: One or more signing secrets (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD) are missing."
-            exit 1
-          fi
-
-      - name: Decode Keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
-
-      - name: Verify Keystore
-        run: |
-          if [ -f "release.keystore" ] && [ -s "release.keystore" ]; then
-            echo "Keystore decoded successfully."
-          else
-            echo "ERROR: Keystore file is missing or empty."
-            exit 1
-          fi
+        run: touch local.properties # Creates an empty file in the project root
 
       - name: Extract version name
-        id: version
-        run: echo "VERSION_NAME=$(./gradlew -q :app:printVersionName | tail -n 1)" >> $GITHUB_OUTPUT
+        id: extract_version_name
+        run: echo "VERSION_NAME=$(grep 'versionName ' app/build.gradle | sed -n 's/.*versionName "\(.*\)".*/\1/p')" >> $GITHUB_OUTPUT
 
-      - name: Build signed APK
-        run: ./gradlew :app:assembleRelease
-        env:
-          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      - name: Extract version code
+        id: extract_version_code
+        run: echo "VERSION_CODE=$(grep 'versionCode ' app/build.gradle | sed -n 's/.*versionCode \([0-9]*\).*/\1/p')" >> $GITHUB_OUTPUT
 
-      - name: Verify APK
+      - name: Check if MAPS_API_KEY_PLACEHOLDER is set
         run: |
-          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
-            echo "Signed APK generated at app/build/outputs/apk/release/app-release.apk"
+          if [ -n "${{ secrets.MAPS_API_KEY_PLACEHOLDER }}" ]; then
+            echo "MAPS_API_KEY_PLACEHOLDER secret is set by GitHub."
           else
-            echo "ERROR: Signed APK not found."
-            exit 1
+            echo "MAPS_API_KEY_PLACEHOLDER secret is NOT set by GitHub. Please ensure it is correctly named in repository settings."
+            # exit 1 # Optionally uncomment to fail if secret is not set
           fi
 
-      - name: Set release tag
-        id: set_tag
+      - name: Build release APK
+        run: ./gradlew :app:assembleRelease
+        env:
+          MAPS_API_KEY_FROM_WORKFLOW: ${{ secrets.MAPS_API_KEY_PLACEHOLDER }}
+
+      - name: Display generated resources on failure
+        if: failure() # Only run if the previous steps (especially build) failed
         run: |
-          COMMIT_SHA=$(git rev-parse --short HEAD)
-          DATE=$(date +%Y-%m-%d)
-          TAG="${{ steps.version.outputs.VERSION_NAME }}-${DATE}-${COMMIT_SHA}"
-          echo "RELEASE_TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "Attempting to display generated string resources..."
+          cat app/build/generated/res/resValues/release/values/generated.xml || echo "Generated XML for resValue not found at app/build/generated/res/resValues/release/values/generated.xml"
+
+      - name: List APK directory contents
+        run: |
+          echo "Listing app/build/outputs/apk:"
+          ls -R app/build/outputs/apk
+          echo "Listing app/build/outputs/apk/release:"
+          ls -R app/build/outputs/apk/release || echo "Release directory not found or empty."
 
       - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
+        id: create_gh_release # Ensure this ID is unique if 'create_release' was used before
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.set_tag.outputs.RELEASE_TAG }}
-          name: Release ${{ steps.version.outputs.VERSION_NAME }} (${{ steps.set_tag.outputs.RELEASE_TAG }})
+          tag_name: ${{ steps.extract_version_name.outputs.VERSION_NAME }}
+          release_name: Release ${{ steps.extract_version_name.outputs.VERSION_NAME }}
           body: |
-            ## Signed APK Release
-            **Version Name:** ${{ steps.version.outputs.VERSION_NAME }}
-            **Branch:** ${{ github.event.inputs.branch }}
-            **Commit:** ${{ github.sha }}
-            **Date:** $(date +%Y-%m-%d)
-            **Changelog:**
-            - Built from commit ${{ github.sha }}
-          draft: false
-          prerelease: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+            ## Release ${{ steps.extract_version_name.outputs.VERSION_NAME }}
+            **Build Number:** ${{ steps.extract_version_code.outputs.VERSION_CODE }}
 
-      - name: Upload APK to Release
-        uses: softprops/action-gh-release@v2
+            **Changelog:**
+            * (Details of changes in this version - please fill in manually or automate)
+          draft: false
+          prerelease: false
+
+      - name: Upload Release APK Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: app/build/outputs/apk/release/app-release.apk
-          tag_name: ${{ steps.set_tag.outputs.RELEASE_TAG }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: ${{ steps.create_gh_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/release/app-release-unsigned.apk
+          asset_name: app-release-unsigned-${{ steps.extract_version_name.outputs.VERSION_NAME }}.apk
+          asset_content_type: application/vnd.android.package-archive
