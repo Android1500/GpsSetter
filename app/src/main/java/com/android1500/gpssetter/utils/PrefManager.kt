@@ -24,6 +24,9 @@ object PrefManager   {
     private const val MAP_TYPE = "map_type"
     private const val DARK_THEME = "dark_theme"
     private const val DISABLE_UPDATE = "disable_update"
+    private const val RANDOM_POSITION_ENABLED = "random_position_enabled"
+    private const val RANDOM_TIME_INTERVAL = "random_time_interval"
+    private const val RANDOM_DISTANCE_RADIUS = "random_distance_radius"
 
 
     private val pref: SharedPreferences by lazy {
@@ -80,6 +83,18 @@ object PrefManager   {
     var isJoyStickEnable: Boolean
     get() = pref.getBoolean("isJoyStickEnable",false)
     set(value) = pref.edit().putBoolean("isJoyStickEnable",value).apply()
+
+    var isRandomPositioningEnabled: Boolean
+        get() = pref.getBoolean(RANDOM_POSITION_ENABLED, false)
+        set(value) = pref.edit().putBoolean(RANDOM_POSITION_ENABLED, value).apply()
+
+    var randomTimeIntervalSeconds: Int
+        get() = pref.getInt(RANDOM_TIME_INTERVAL, 60)
+        set(value) = pref.edit().putInt(RANDOM_TIME_INTERVAL, value).apply()
+
+    var randomDistanceRadiusMeters: Float
+        get() = pref.getFloat(RANDOM_DISTANCE_RADIUS, 1000.0f)
+        set(value) = pref.edit().putFloat(RANDOM_DISTANCE_RADIUS, value).apply()
 
 
 

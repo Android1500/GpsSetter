@@ -1,0 +1,95 @@
+name: Build and Release APK
+
+on:
+  workflow_dispatch: # Allows manual triggering
+  # push:
+  #   tags:
+  #     - 'v*.*.*' # Example: v1.0.0, v1.2.3-beta
+
+permissions:
+  contents: write # Required to create a release and upload assets
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Create empty local.properties
+        run: touch local.properties # Creates an empty file in the project root
+
+      - name: Extract version name
+        id: extract_version_name
+        run: echo "VERSION_NAME=$(grep 'versionName ' app/build.gradle | sed -n 's/.*versionName "\(.*\)".*/\1/p')" >> $GITHUB_OUTPUT
+
+      - name: Extract version code
+        id: extract_version_code
+        run: echo "VERSION_CODE=$(grep 'versionCode ' app/build.gradle | sed -n 's/.*versionCode \([0-9]*\).*/\1/p')" >> $GITHUB_OUTPUT
+
+      - name: Check if MAPS_API_KEY_PLACEHOLDER is set
+        run: |
+          if [ -n "${{ secrets.MAPS_API_KEY_PLACEHOLDER }}" ]; then
+            echo "MAPS_API_KEY_PLACEHOLDER secret is set by GitHub."
+          else
+            echo "MAPS_API_KEY_PLACEHOLDER secret is NOT set by GitHub. Please ensure it is correctly named in repository settings."
+            # exit 1 # Optionally uncomment to fail if secret is not set
+          fi
+
+      - name: Build release APK
+        run: ./gradlew :app:assembleRelease
+        env:
+          MAPS_API_KEY_FROM_WORKFLOW: ${{ secrets.MAPS_API_KEY_PLACEHOLDER }}
+
+      - name: Display generated resources on failure
+        if: failure() # Only run if the previous steps (especially build) failed
+        run: |
+          echo "Attempting to display generated string resources..."
+          cat app/build/generated/res/resValues/release/values/generated.xml || echo "Generated XML for resValue not found at app/build/generated/res/resValues/release/values/generated.xml"
+
+      - name: List APK directory contents
+        run: |
+          echo "Listing app/build/outputs/apk:"
+          ls -R app/build/outputs/apk
+          echo "Listing app/build/outputs/apk/release:"
+          ls -R app/build/outputs/apk/release || echo "Release directory not found or empty."
+
+      - name: Create GitHub Release
+        id: create_gh_release # Ensure this ID is unique if 'create_release' was used before
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.extract_version_name.outputs.VERSION_NAME }}
+          release_name: Release ${{ steps.extract_version_name.outputs.VERSION_NAME }}
+          body: |
+            ## Release ${{ steps.extract_version_name.outputs.VERSION_NAME }}
+            **Build Number:** ${{ steps.extract_version_code.outputs.VERSION_CODE }}
+
+            **Changelog:**
+            * (Details of changes in this version - please fill in manually or automate)
+          draft: false
+          prerelease: false
+
+      - name: Upload Release APK Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_gh_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/release/app-release-unsigned.apk
+          asset_name: app-release-unsigned-${{ steps.extract_version_name.outputs.VERSION_NAME }}.apk
+          asset_content_type: application/vnd.android.package-archive

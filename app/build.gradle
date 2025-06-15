@@ -8,6 +8,10 @@ plugins {
     id 'com.google.devtools.ksp' version '1.8.10-1.0.9'
 }
 
+kotlin {
+    jvmToolchain(11)
+}
+
 def tagName = 'v1.3.0-beta'
 
 android {
@@ -20,28 +24,79 @@ android {
         versionName tagName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "TAG_NAME", "\"${tagName}\"")
+        // Define MAPS_API_KEY as a buildConfigField
+        // It attempts to read an environment variable named MAPS_API_KEY_FROM_WORKFLOW.
+        // If the environment variable is not set (e.g., during local builds),
+        // it falls back to "YOUR_DEBUG_KEY_PLACEHOLDER".
+        def pobrezaApiKey = System.getenv("MAPS_API_KEY_FROM_WORKFLOW") ?: "YOUR_DEBUG_KEY_PLACEHOLDER"
+        buildConfigField("String", "MAPS_API_KEY", "\"${pobrezaApiKey}\"")
+
+        // New resValue for the manifest
+        def mapsApiKeyForRes = System.getenv("MAPS_API_KEY_FROM_WORKFLOW") ?: "YOUR_DEBUG_KEY_PLACEHOLDER_RES"
+        resValue("string", "google_maps_key_for_manifest", mapsApiKeyForRes)
     }
 
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('KEYSTORE_PATH')) // CI must provide this
+            storePassword System.getenv('KEYSTORE_PASSWORD')
+            keyAlias System.getenv('KEY_ALIAS')
+            keyPassword System.getenv('KEY_PASSWORD')
+        }
+    }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = '11'
-    }
+    // kotlinOptions block removed
     buildFeatures {
         viewBinding true
         buildConfig true
     }
     namespace 'com.android1500.gpssetter'
     buildToolsVersion '33.0.0'
+
+    applicationVariants.all { variant ->
+        if (variant.name == "release") {
+            // Using a common task that runs before actual packaging.
+            // If packageRelease doesn't exist or causes issues, processReleaseManifest is another option.
+            tasks.named("package${variant.name.capitalize()}").configure {
+                doFirst {
+                    println "== Signing Debug Info from app/build.gradle =="
+                    println "Env Var KEYSTORE_PATH: " + System.getenv('KEYSTORE_PATH')
+                    println "Env Var KEYSTORE_PASSWORD is set: " + (System.getenv('KEYSTORE_PASSWORD') != null && !System.getenv('KEYSTORE_PASSWORD').isEmpty())
+                    println "Env Var KEY_ALIAS: " + System.getenv('KEY_ALIAS')
+                    println "Env Var KEY_PASSWORD is set: " + (System.getenv('KEY_PASSWORD') != null && !System.getenv('KEY_PASSWORD').isEmpty())
+
+                    def signingReleaseConfig = android.signingConfigs.findByName("release")
+                    if (signingReleaseConfig != null) {
+                        println "Gradle SigningConfig 'release' found."
+                        println "  signingConfig.storeFile: " + signingReleaseConfig.storeFile?.absolutePath
+                        println "  signingConfig.storePassword Set: " + (signingReleaseConfig.storePassword != null && !signingReleaseConfig.storePassword.isEmpty())
+                        println "  signingConfig.keyAlias Set: " + (signingReleaseConfig.keyAlias != null && !signingReleaseConfig.keyAlias.isEmpty())
+                        println "  signingConfig.keyPassword Set: " + (signingReleaseConfig.keyPassword != null && !signingReleaseConfig.keyPassword.isEmpty())
+                        // isSigningReady() might not be available on all AGP versions or config states, use with caution or try-catch
+                        try {
+                           println "  signingConfig.isSigningReady(): " + signingReleaseConfig.isSigningReady()
+                        } catch (Exception e) {
+                           println "  signingConfig.isSigningReady() check failed: " + e.getMessage()
+                        }
+                    } else {
+                        println "Gradle SigningConfig 'release' NOT found."
+                    }
+                    println "================================================"
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -100,7 +155,7 @@ dependencies {
     implementation 'androidx.palette:palette:1.0.0'
 
 
-    implementation 'io.github.controlwear:virtualjoystick:1.10.1'
+    implementation 'com.github.lukkass222:virtual-joystick-android:1.13.5'
 
 
 
@@ -110,4 +165,10 @@ dependencies {
 
 
 
+}
+
+tasks.register('printVersionName') {
+    doLast {
+        println android.defaultConfig.versionName
+    }
 }

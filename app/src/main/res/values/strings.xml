@@ -79,5 +79,27 @@
     <string name="current_address">current address</string>
     <string name="app_update_failed">App update fail</string>
 
+    <!-- Import/Export Strings -->
+    <string name="export_favourites">Export Favorites</string>
+    <string name="import_favourites">Import Favorites</string>
+    <string name="export_successful">Favorites exported successfully.</string>
+    <string name="export_failed">Export failed</string>
+    <string name="export_failed_no_uri">Export failed: No file selected.</string>
+    <string name="no_favorites_to_export">No favorites to export.</string>
+    <string name="import_failed_no_uri">Import failed: No file selected.</string>
+    <string name="import_successful_count">%d favorites imported successfully.</string>
+    <string name="no_valid_favorites_in_file">No valid favorites found in the file.</string>
+    <string name="import_failed_generic">Import failed: %s</string>
+    <string name="invalid_file_format">Import failed: Invalid file format.</string>
+
+    <!-- Random Positioning Strings -->
+    <string name="random_positioning_title">Random Positioning</string>
+    <string name="enable_random_positioning">Enable Random Positioning</string>
+    <string name="time_interval_seconds_hint">Time Interval (seconds)</string>
+    <string name="distance_radius_meters_hint">Radius (meters)</string>
+    <string name="invalid_input_positive_number">Please enter a positive number.</string>
+    <string name="random_positioning_select_center_prompt">Please select a central point on the map for random positioning.</string>
+    <string name="random_positioning_started">Random positioning started.</string>
+    <string name="random_positioning_stopped">Random positioning stopped.</string>
 
 </resources>
