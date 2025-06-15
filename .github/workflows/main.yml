@@ -1,0 +1,110 @@
+name: Build and Release Signed APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build from'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Create empty local.properties
+        run: touch local.properties
+
+      - name: Check signing secrets
+        run: |
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ] || [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ] || [ -z "${{ secrets.KEY_ALIAS }}" ] || [ -z "${{ secrets.KEY_PASSWORD }}" ]; then
+            echo "ERROR: One or more signing secrets (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD) are missing."
+            exit 1
+          fi
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+
+      - name: Verify Keystore
+        run: |
+          if [ -f "release.keystore" ] && [ -s "release.keystore" ]; then
+            echo "Keystore decoded successfully."
+          else
+            echo "ERROR: Keystore file is missing or empty."
+            exit 1
+          fi
+
+      - name: Extract version name
+        id: version
+        run: echo "VERSION_NAME=$(./gradlew -q :app:printVersionName | tail -n 1)" >> $GITHUB_OUTPUT
+
+      - name: Build signed APK
+        run: ./gradlew :app:assembleRelease
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Verify APK
+        run: |
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            echo "Signed APK generated at app/build/outputs/apk/release/app-release.apk"
+          else
+            echo "ERROR: Signed APK not found."
+            exit 1
+          fi
+
+      - name: Set release tag
+        id: set_tag
+        run: |
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          DATE=$(date +%Y-%m-%d)
+          TAG="${{ steps.version.outputs.VERSION_NAME }}-${DATE}-${COMMIT_SHA}"
+          echo "RELEASE_TAG=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.set_tag.outputs.RELEASE_TAG }}
+          name: Release ${{ steps.version.outputs.VERSION_NAME }} (${{ steps.set_tag.outputs.RELEASE_TAG }})
+          body: |
+            ## Signed APK Release
+            **Version Name:** ${{ steps.version.outputs.VERSION_NAME }}
+            **Branch:** ${{ github.event.inputs.branch }}
+            **Commit:** ${{ github.sha }}
+            **Date:** $(date +%Y-%m-%d)
+            **Changelog:**
+            - Built from commit ${{ github.sha }}
+          draft: false
+          prerelease: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/release/app-release.apk
+          tag_name: ${{ steps.set_tag.outputs.RELEASE_TAG }}
+          token: ${{ secrets.GITHUB_TOKEN }}
